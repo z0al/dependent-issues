@@ -1,0 +1,20 @@
+name: 'build-test'
+
+# Check dependencies
+on:
+  push:
+  issues:
+  pull_request:
+  schedule:
+    - cron: '0 0 * * *' # daily
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./
+        with:
+          issues: on
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

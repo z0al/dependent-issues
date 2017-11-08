@@ -1,0 +1,15 @@
+{
+	"extends": ["prettier"],
+	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"ecmaVersion": 9,
+		"sourceType": "module",
+		"project": "./tsconfig.json"
+	},
+
+	"env": {
+		"node": true,
+		"es6": true,
+		"jest/globals": true
+	}
+}

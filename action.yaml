@@ -1,0 +1,23 @@
+name: Dependent Issues
+description: Mark issues as dependent on another
+author: Ahmed T. Ali
+
+inputs:
+  label:
+    required: false
+    description: The label to use to mark dependent issues
+    default: dependent
+
+  issues:
+    required: false
+    description: Enable checking for issues
+    default: off
+
+  keywords:
+    required: false
+    description: Keywords for marking dependencies
+    default: depends on, blocked by
+
+runs:
+  using: node12
+  main: dist/index.js
