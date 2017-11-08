@@ -1,0 +1,27 @@
+{
+	"name": "dep-bot",
+	"version": "1.0.0",
+	"description": "A dependency manager for your Pull Requests",
+	"author": "Ahmed T. Ali <ah.tajelsir@gmail.com> (ahmed.sd)",
+	"license": "MIT",
+	"repository": "https://github.com/ahmed-taj/dep.git",
+	"scripts": {
+		"start": "probot run ./index.js",
+		"test": "jest && standard"
+	},
+	"dependencies": {
+		"probot": "^3.0.0"
+	},
+	"devDependencies": {
+		"jest": "^21.2.1",
+		"localtunnel": "^1.8.2",
+		"standard": "^10.0.3"
+	},
+	"engines": {
+		"node": ">= 8",
+		"npm": ">= 5"
+	},
+	"standard": {
+		"env": ["jest"]
+	}
+}
