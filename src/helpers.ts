@@ -205,14 +205,14 @@ export class IssueManager {
 		const isBlocked = blockers.length > 0;
 
 		const header = isBlocked
-			? ':hourglass_flowing_sand: : Alright! Looks like we are ' +
-			  'going to wait for some *dependencies* to be resolved first:'
+			? ':hourglass_flowing_sand: : Alright! Looks like we ' +
+			  'need to wait for some *dependencies*:'
 			: ':tada: Great news! Looks like all the *dependencies* ' +
 			  'have been resolved:';
 
 		// e.g:
-		// * Microsoft/vscode#999
-		// * ~~github/atom#1~~
+		// * facebook/react#999
+		// * ~~facebook/react#1~~
 		const dependencyList = deps
 			.map((dep) => {
 				if (blockers.find((blocker) => dequal(dep, blocker))) {
@@ -222,29 +222,26 @@ export class IssueManager {
 			})
 			.map((dep) => {
 				const link = formatDependency(dep);
-				return '* ' + dep.blocker ? link : `~~${link}~~`;
+				return '* ' + (dep.blocker ? link : `~~${link}~~`);
 			})
 			.join('\n');
 
 		const dontWorry = isBlocked
-			? `Don't worry, I will keep an eye on the list above and keep ` +
-			  'this comment updated. '
+			? `Don't worry, I will continue watching the list above and ` +
+			  'keep this comment updated. '
 			: '';
 
 		const howToUpdate =
-			':bulb: To add or remove a dependency update this issue/PR ' +
-			'description.';
+			'To add or remove a dependency please update this ' +
+			'issue/PR description.';
 
 		const footer =
 			`Brought to you by **[${config.actionName}]` +
 			`(${config.actionRepoURL})** (:robot: ). Happy coding!`;
 
-		return [
-			header,
-			dependencyList,
-			dontWorry + howToUpdate,
-			footer,
-		].join('\n\n');
+		const note = ':bulb: ' + dontWorry + howToUpdate;
+
+		return [header, dependencyList, note, footer].join('\n\n');
 	}
 
 	async writeComment(issue: Issue, text: string, create = false) {

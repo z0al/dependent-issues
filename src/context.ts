@@ -35,7 +35,7 @@ export async function getActionContext(): Promise<ActionContext> {
 	let issues: Issue[] = [];
 
 	// Only run checks for the context.issue (if any)
-	if (issue.number) {
+	if (issue?.number) {
 		issues = [
 			(await client.issues.get({ ...repo, issue_number: issue.number }))
 				.data,

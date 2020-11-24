@@ -1,5 +1,5 @@
 // Ours
-import { ActionContext, Dependency } from './types';
+import { ActionContext } from './types';
 
 import {
 	IssueManager,
@@ -18,12 +18,15 @@ export async function checkIssues(context: ActionContext) {
 		const dependencies = extractor.fromIssue(issue);
 
 		const dependencyIssues = await Promise.all(
-			dependencies.map(resolver.get)
+			dependencies.map(async (dep) => ({
+				dep,
+				issue: await resolver.get(dep),
+			}))
 		);
 
 		const blockers = dependencyIssues
-			.filter((depIssue) => depIssue.state === 'open')
-			.map((iss) => ({ ...repo, number: iss.number } as Dependency));
+			.filter((data) => data.issue.state === 'open')
+			.map((data) => data.dep);
 
 		const isBlocked = blockers.length > 0;
 
@@ -32,11 +35,13 @@ export async function checkIssues(context: ActionContext) {
 			? await manager.addLabel(issue)
 			: await manager.removeLabel(issue);
 
-		await manager.writeComment(
-			issue,
-			manager.generateComment(dependencies, blockers, config),
-			!isBlocked
-		);
+		dependencies.length > 0
+			? await manager.writeComment(
+					issue,
+					manager.generateComment(dependencies, blockers, config),
+					!isBlocked
+			  )
+			: /* TODO: remove existing comments if any*/ null;
 
 		await manager.updateCommitStatus(issue, blockers);
 	}

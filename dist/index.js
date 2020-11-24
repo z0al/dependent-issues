@@ -7,25 +7,6 @@ require('./sourcemap-register.js');module.exports =
 
 "use strict";
 
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -36,20 +17,21 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-// Packages
-const core = __importStar(__webpack_require__(2186));
+exports.start = void 0;
 // Ours
 const check_1 = __webpack_require__(7657);
 const context_1 = __webpack_require__(3842);
 // Entry point
-(() => __awaiter(void 0, void 0, void 0, function* () {
-    try {
+function start() {
+    return __awaiter(this, void 0, void 0, function* () {
+        // try {
         yield check_1.checkIssues(yield context_1.getActionContext());
-    }
-    catch (error) {
-        core.setFailed(error.message);
-    }
-}))();
+        // } catch (error) {
+        // 	core.setFailed(error.message);
+        // }
+    });
+}
+exports.start = start;
 //# sourceMappingURL=action.js.map
 
 /***/ }),
@@ -79,16 +61,23 @@ function checkIssues(context) {
         const resolver = new helpers_1.DependencyResolver(client, context.issues, repo);
         for (const issue of context.issues) {
             const dependencies = extractor.fromIssue(issue);
-            const dependencyIssues = yield Promise.all(dependencies.map(resolver.get));
+            const dependencyIssues = yield Promise.all(dependencies.map((dep) => __awaiter(this, void 0, void 0, function* () {
+                return ({
+                    dep,
+                    issue: yield resolver.get(dep),
+                });
+            })));
             const blockers = dependencyIssues
-                .filter((depIssue) => depIssue.state === 'open')
-                .map((iss) => (Object.assign(Object.assign({}, repo), { number: iss.number })));
+                .filter((data) => data.issue.state === 'open')
+                .map((data) => data.dep);
             const isBlocked = blockers.length > 0;
             // Toggle label
             isBlocked
                 ? yield manager.addLabel(issue)
                 : yield manager.removeLabel(issue);
-            yield manager.writeComment(issue, manager.generateComment(dependencies, blockers, config), !isBlocked);
+            dependencies.length > 0
+                ? yield manager.writeComment(issue, manager.generateComment(dependencies, blockers, config), !isBlocked)
+                : /* TODO: remove existing comments if any*/ null;
             yield manager.updateCommitStatus(issue, blockers);
         }
     });
@@ -160,7 +149,7 @@ function getActionContext() {
         const { issue, repo } = github.context;
         let issues = [];
         // Only run checks for the context.issue (if any)
-        if (issue.number) {
+        if (issue === null || issue === void 0 ? void 0 : issue.number) {
             issues = [
                 (yield client.issues.get(Object.assign(Object.assign({}, repo), { issue_number: issue.number })))
                     .data,
@@ -342,13 +331,13 @@ class IssueManager {
     generateComment(deps, blockers, config) {
         const isBlocked = blockers.length > 0;
         const header = isBlocked
-            ? ':hourglass_flowing_sand: : Alright! Looks like we are ' +
-                'going to wait for some *dependencies* to be resolved first:'
+            ? ':hourglass_flowing_sand: : Alright! Looks like we ' +
+                'need to wait for some *dependencies*:'
             : ':tada: Great news! Looks like all the *dependencies* ' +
                 'have been resolved:';
         // e.g:
-        // * Microsoft/vscode#999
-        // * ~~github/atom#1~~
+        // * facebook/react#999
+        // * ~~facebook/react#1~~
         const dependencyList = deps
             .map((dep) => {
             if (blockers.find((blocker) => dequal_1.dequal(dep, blocker))) {
@@ -358,23 +347,19 @@ class IssueManager {
         })
             .map((dep) => {
             const link = formatDependency(dep);
-            return '* ' + dep.blocker ? link : 0;
+            return '* ' + (dep.blocker ? link : `~~${link}~~`);
         })
             .join('\n');
         const dontWorry = isBlocked
-            ? `Don't worry, I will keep an eye on the list above and keep ` +
-                'this comment updated. '
+            ? `Don't worry, I will continue watching the list above and ` +
+                'keep this comment updated. '
             : '';
-        const howToUpdate = ':bulb: To add or remove a dependency update this issue/PR ' +
-            'description.';
+        const howToUpdate = 'To add or remove a dependency please update this ' +
+            'issue/PR description.';
         const footer = `Brought to you by **[${config.actionName}]` +
             `(${config.actionRepoURL})** (:robot: ). Happy coding!`;
-        return [
-            header,
-            dependencyList,
-            dontWorry + howToUpdate,
-            footer,
-        ].join('\n\n');
+        const note = ':bulb: ' + dontWorry + howToUpdate;
+        return [header, dependencyList, note, footer].join('\n\n');
     }
     writeComment(issue, text, create = false) {
         return __awaiter(this, void 0, void 0, function* () {
