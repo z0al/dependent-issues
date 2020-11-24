@@ -1,8 +1,8 @@
 // Ours
-import { ActionContext } from './types';
+import { ActionContext, Dependency } from './types';
 
 import {
-	IssueLabeler,
+	IssueManager,
 	DependencyResolver,
 	DependencyExtractor,
 } from './helpers';
@@ -10,7 +10,7 @@ import {
 export async function checkIssues(context: ActionContext) {
 	const { client, config, repo } = context;
 
-	const labeler = new IssueLabeler(client, repo, config.label);
+	const manager = new IssueManager(client, repo, config);
 	const extractor = new DependencyExtractor(repo, config.keywords);
 	const resolver = new DependencyResolver(client, context.issues, repo);
 
@@ -21,14 +21,15 @@ export async function checkIssues(context: ActionContext) {
 			dependencies.map(resolver.get)
 		);
 
-		const blockers = dependencyIssues.filter(
-			(depIssue) => depIssue.state === 'open'
-		);
+		const blockers = dependencyIssues
+			.filter((depIssue) => depIssue.state === 'open')
+			.map((iss) => ({ ...repo, number: iss.number } as Dependency));
 
+		// Toggle label
 		blockers.length === 0
-			? await labeler.remove(issue)
-			: await labeler.add(issue);
+			? await manager.removeLabel(issue)
+			: await manager.addLabel(issue);
 
-		// TODO: update issue/PR comment and status
+		await manager.updateCommitStatus(issue, blockers);
 	}
 }

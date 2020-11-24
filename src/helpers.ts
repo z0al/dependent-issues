@@ -3,11 +3,17 @@ import uniqBy from 'lodash.uniqby';
 import issueRegex from 'issue-regex';
 
 // Ours
-import { Dependency, Issue, Repository, GithubClient } from './types';
+import {
+	Dependency,
+	Issue,
+	Repository,
+	GithubClient,
+	ActionContext,
+} from './types';
 
 const ISSUE_REGEX = issueRegex();
 
-export function buildDependencyRegex(keywords: string[]) {
+export function createDependencyRegex(keywords: string[]) {
 	const flags = ISSUE_REGEX.flags + 'i';
 
 	// outputs: kw1|kw2 <white-space> (<issue-regex>)
@@ -17,18 +23,23 @@ export function buildDependencyRegex(keywords: string[]) {
 	);
 }
 
+export function formatDependency(dep: Dependency, repo?: Repository) {
+	if (dep.owner === repo?.owner && dep.repo === repo.repo) {
+		return `#${dep.number}`;
+	}
+
+	return `${dep.owner}/${dep.repo}#${dep.number}`;
+}
+
 export class DependencyExtractor {
 	private pattern: RegExp;
 
 	constructor(private repo: Repository, keywords: string[]) {
-		this.pattern = buildDependencyRegex(keywords);
+		this.pattern = createDependencyRegex(keywords);
 	}
 
 	private deduplicate(deps: Dependency[]) {
-		return uniqBy(
-			deps,
-			(dep) => `${dep.owner}/${dep.repo}#${dep.number}`
-		);
+		return uniqBy(deps, formatDependency);
 	}
 
 	private getIssueLinks(text: string) {
@@ -129,38 +140,136 @@ export class DependencyResolver {
 	}
 }
 
-export class IssueLabeler {
+export class IssueManager {
 	constructor(
 		private gh: GithubClient,
 		private repo: Repository,
-		private label: string
+		private config: ActionContext['config']
 	) {}
 
-	async add(issue: Issue) {
+	async addLabel(issue: Issue) {
 		const shouldAddLabel = !issue.labels.find(
-			(lbl) => lbl.name === this.label
+			(lbl) => lbl.name === this.config.label
 		);
 
 		if (shouldAddLabel) {
 			await this.gh.issues.addLabels({
 				...this.repo,
 				issue_number: issue.number,
-				labels: [this.label],
+				labels: [this.config.label],
 			});
 		}
 	}
 
-	async remove(issue: Issue) {
+	async removeLabel(issue: Issue) {
 		const shouldRemoveLabel = issue.labels.find(
-			(lbl) => lbl.name === this.label
+			(lbl) => lbl.name === this.config.label
 		);
 
 		if (shouldRemoveLabel) {
 			await this.gh.issues.removeLabel({
 				...this.repo,
 				issue_number: issue.number,
-				name: this.label,
+				name: this.config.label,
 			});
 		}
+	}
+
+	/**
+	 * Adds a unique text at the end of the text to distinguish the
+	 * action own's comments.
+	 */
+	private sign(text: string) {
+		return text.trim() + '\n' + this.config.commentSignature;
+	}
+
+	private isSigned(text: string) {
+		return text.trim().endsWith(this.config.commentSignature);
+	}
+
+	private originalText(signed: string) {
+		return signed
+			.trim()
+			.slice(0, -1 * this.config.commentSignature.length)
+			.trim();
+	}
+
+	async writeComment(issue: Issue, text: string, create = false) {
+		const signedText = this.sign(text);
+
+		const issueComments = await this.gh.paginate(
+			this.gh.issues.listComments,
+			{ ...this.repo, issue_number: issue.number, per_page: 100 }
+		);
+
+		const currentComment = issueComments.find((comment) =>
+			this.isSigned(comment.body)
+		);
+
+		// Exit early if the content is the same
+		if (currentComment) {
+			const newContent = text.trim();
+			const existingContent = this.originalText(currentComment.body);
+
+			if (existingContent === newContent) {
+				return;
+			}
+		}
+
+		// Delete old comment if necessary
+		if (create && currentComment) {
+			await this.gh.issues.deleteComment({
+				...this.repo,
+				comment_id: currentComment.id,
+			});
+		}
+
+		const commentParams = { ...this.repo, body: signedText };
+
+		// Write comment
+		currentComment && !create
+			? await this.gh.issues.updateComment({
+					...commentParams,
+					comment_id: currentComment.id,
+			  })
+			: await this.gh.issues.createComment({
+					...commentParams,
+					issue_number: issue.number,
+			  });
+	}
+
+	async updateCommitStatus(issue: Issue, blockers: Dependency[]) {
+		if (!issue.pull_request) {
+			return;
+		}
+
+		const isBlocked = blockers.length > 0;
+		const firstDependency = isBlocked
+			? formatDependency(blockers[0], this.repo)
+			: '';
+
+		const description = !isBlocked
+			? 'All listed issues are closed'
+			: blockers.length == 1
+			? `Blocked by ${firstDependency}`
+			: `Blocked by ${firstDependency} and ${
+					blockers.length - 1
+			  } more issues`;
+
+		// Get the PR Head SHA
+		const pull = (
+			await this.gh.pulls.get({
+				...this.repo,
+				pull_number: issue.number,
+			})
+		).data;
+
+		return this.gh.repos.createCommitStatus({
+			...this.repo,
+			description,
+			sha: pull.head.sha,
+			context: this.config.actionName,
+			state: isBlocked ? 'pending' : 'success',
+		});
 	}
 }

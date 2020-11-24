@@ -17,6 +17,8 @@ export type ActionContext = {
 	issues: Issue[];
 	repo: Repository;
 	config: {
+		actionName: string;
+		commentSignature: string;
 		label: string;
 		issues: string;
 		keywords: string[];

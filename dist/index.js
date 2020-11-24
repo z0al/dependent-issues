@@ -44,7 +44,7 @@ const context_1 = __webpack_require__(3842);
 // Entry point
 (() => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield check_1.checkIssues(yield context_1.getContext());
+        yield check_1.checkIssues(yield context_1.getActionContext());
     }
     catch (error) {
         core.setFailed(error.message);
@@ -74,17 +74,20 @@ const helpers_1 = __webpack_require__(5008);
 function checkIssues(context) {
     return __awaiter(this, void 0, void 0, function* () {
         const { client, config, repo } = context;
-        const labeler = new helpers_1.IssueLabeler(client, repo, config.label);
+        const manager = new helpers_1.IssueManager(client, repo, config);
         const extractor = new helpers_1.DependencyExtractor(repo, config.keywords);
         const resolver = new helpers_1.DependencyResolver(client, context.issues, repo);
         for (const issue of context.issues) {
             const dependencies = extractor.fromIssue(issue);
             const dependencyIssues = yield Promise.all(dependencies.map(resolver.get));
-            const blockers = dependencyIssues.filter((depIssue) => depIssue.state === 'open');
+            const blockers = dependencyIssues
+                .filter((depIssue) => depIssue.state === 'open')
+                .map((iss) => (Object.assign(Object.assign({}, repo), { number: iss.number })));
+            // Toggle label
             blockers.length === 0
-                ? yield labeler.remove(issue)
-                : yield labeler.add(issue);
-            // TODO: update issue/PR comment and status
+                ? yield manager.removeLabel(issue)
+                : yield manager.addLabel(issue);
+            yield manager.updateCommitStatus(issue, blockers);
         }
     });
 }
@@ -127,17 +130,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getContext = void 0;
+exports.getActionContext = void 0;
 // Packages
 const core = __importStar(__webpack_require__(2186));
 const github = __importStar(__webpack_require__(5438));
-function getContext() {
+function getActionContext() {
     return __awaiter(this, void 0, void 0, function* () {
         const config = {
+            actionName: 'Dependent Issues',
+            commentSignature: '<!-- By Dependent Issues (Action) - DO NOT REMOVE -->',
             label: core.getInput('label'),
             issues: core.getInput('issues'),
             keywords: core
                 .getInput('keywords')
+                .trim()
                 .split(',')
                 .map((kw) => kw.trim()),
         };
@@ -173,7 +179,7 @@ function getContext() {
         };
     });
 }
-exports.getContext = getContext;
+exports.getActionContext = getActionContext;
 //# sourceMappingURL=context.js.map
 
 /***/ }),
@@ -196,24 +202,31 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.IssueLabeler = exports.DependencyResolver = exports.DependencyExtractor = exports.buildDependencyRegex = void 0;
+exports.IssueManager = exports.DependencyResolver = exports.DependencyExtractor = exports.formatDependency = exports.createDependencyRegex = void 0;
 // Packages
 const lodash_uniqby_1 = __importDefault(__webpack_require__(3586));
 const issue_regex_1 = __importDefault(__webpack_require__(2506));
 const ISSUE_REGEX = issue_regex_1.default();
-function buildDependencyRegex(keywords) {
+function createDependencyRegex(keywords) {
     const flags = ISSUE_REGEX.flags + 'i';
     // outputs: kw1|kw2 <white-space> (<issue-regex>)
     return new RegExp(`(?:${keywords.join('|')})\\s+(${ISSUE_REGEX.source})`, flags);
 }
-exports.buildDependencyRegex = buildDependencyRegex;
+exports.createDependencyRegex = createDependencyRegex;
+function formatDependency(dep, repo) {
+    if (dep.owner === (repo === null || repo === void 0 ? void 0 : repo.owner) && dep.repo === repo.repo) {
+        return `#${dep.number}`;
+    }
+    return `${dep.owner}/${dep.repo}#${dep.number}`;
+}
+exports.formatDependency = formatDependency;
 class DependencyExtractor {
     constructor(repo, keywords) {
         this.repo = repo;
-        this.pattern = buildDependencyRegex(keywords);
+        this.pattern = createDependencyRegex(keywords);
     }
     deduplicate(deps) {
-        return lodash_uniqby_1.default(deps, (dep) => `${dep.owner}/${dep.repo}#${dep.number}`);
+        return lodash_uniqby_1.default(deps, formatDependency);
     }
     getIssueLinks(text) {
         const issuesWithKeywords = text.match(this.pattern) || [];
@@ -283,30 +296,89 @@ class DependencyResolver {
     }
 }
 exports.DependencyResolver = DependencyResolver;
-class IssueLabeler {
-    constructor(gh, repo, label) {
+class IssueManager {
+    constructor(gh, repo, config) {
         this.gh = gh;
         this.repo = repo;
-        this.label = label;
+        this.config = config;
     }
-    add(issue) {
+    addLabel(issue) {
         return __awaiter(this, void 0, void 0, function* () {
-            const shouldAddLabel = !issue.labels.find((lbl) => lbl.name === this.label);
+            const shouldAddLabel = !issue.labels.find((lbl) => lbl.name === this.config.label);
             if (shouldAddLabel) {
-                yield this.gh.issues.addLabels(Object.assign(Object.assign({}, this.repo), { issue_number: issue.number, labels: [this.label] }));
+                yield this.gh.issues.addLabels(Object.assign(Object.assign({}, this.repo), { issue_number: issue.number, labels: [this.config.label] }));
             }
         });
     }
-    remove(issue) {
+    removeLabel(issue) {
         return __awaiter(this, void 0, void 0, function* () {
-            const shouldRemoveLabel = issue.labels.find((lbl) => lbl.name === this.label);
+            const shouldRemoveLabel = issue.labels.find((lbl) => lbl.name === this.config.label);
             if (shouldRemoveLabel) {
-                yield this.gh.issues.removeLabel(Object.assign(Object.assign({}, this.repo), { issue_number: issue.number, name: this.label }));
+                yield this.gh.issues.removeLabel(Object.assign(Object.assign({}, this.repo), { issue_number: issue.number, name: this.config.label }));
             }
+        });
+    }
+    /**
+     * Adds a unique text at the end of the text to distinguish the
+     * action own's comments.
+     */
+    sign(text) {
+        return text.trim() + '\n' + this.config.commentSignature;
+    }
+    isSigned(text) {
+        return text.trim().endsWith(this.config.commentSignature);
+    }
+    originalText(signed) {
+        return signed
+            .trim()
+            .slice(0, -1 * this.config.commentSignature.length)
+            .trim();
+    }
+    writeComment(issue, text, create = false) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const signedText = this.sign(text);
+            const issueComments = yield this.gh.paginate(this.gh.issues.listComments, Object.assign(Object.assign({}, this.repo), { issue_number: issue.number, per_page: 100 }));
+            const currentComment = issueComments.find((comment) => this.isSigned(comment.body));
+            // Exit early if the content is the same
+            if (currentComment) {
+                const newContent = text.trim();
+                const existingContent = this.originalText(currentComment.body);
+                if (existingContent === newContent) {
+                    return;
+                }
+            }
+            // Delete old comment if necessary
+            if (create && currentComment) {
+                yield this.gh.issues.deleteComment(Object.assign(Object.assign({}, this.repo), { comment_id: currentComment.id }));
+            }
+            const commentParams = Object.assign(Object.assign({}, this.repo), { body: signedText });
+            // Write comment
+            currentComment && !create
+                ? yield this.gh.issues.updateComment(Object.assign(Object.assign({}, commentParams), { comment_id: currentComment.id }))
+                : yield this.gh.issues.createComment(Object.assign(Object.assign({}, commentParams), { issue_number: issue.number }));
+        });
+    }
+    updateCommitStatus(issue, blockers) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!issue.pull_request) {
+                return;
+            }
+            const isBlocked = blockers.length > 0;
+            const firstDependency = isBlocked
+                ? formatDependency(blockers[0], this.repo)
+                : '';
+            const description = !isBlocked
+                ? 'All listed issues are closed'
+                : blockers.length == 1
+                    ? `Blocked by ${firstDependency}`
+                    : `Blocked by ${firstDependency} and ${blockers.length - 1} more issues`;
+            // Get the PR Head SHA
+            const pull = (yield this.gh.pulls.get(Object.assign(Object.assign({}, this.repo), { pull_number: issue.number }))).data;
+            return this.gh.repos.createCommitStatus(Object.assign(Object.assign({}, this.repo), { description, sha: pull.head.sha, context: this.config.actionName, state: isBlocked ? 'pending' : 'success' }));
         });
     }
 }
-exports.IssueLabeler = IssueLabeler;
+exports.IssueManager = IssueManager;
 //# sourceMappingURL=helpers.js.map
 
 /***/ }),

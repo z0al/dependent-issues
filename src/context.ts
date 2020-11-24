@@ -5,12 +5,16 @@ import * as github from '@actions/github';
 // Ours
 import { ActionContext, Issue } from './types';
 
-export async function getContext(): Promise<ActionContext> {
+export async function getActionContext(): Promise<ActionContext> {
 	const config = {
+		actionName: 'Dependent Issues',
+		commentSignature:
+			'<!-- By Dependent Issues (Action) - DO NOT REMOVE -->',
 		label: core.getInput('label'),
 		issues: core.getInput('issues'),
 		keywords: core
 			.getInput('keywords')
+			.trim()
 			.split(',')
 			.map((kw) => kw.trim()),
 	};
