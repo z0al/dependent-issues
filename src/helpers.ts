@@ -111,7 +111,8 @@ export class DependencyResolver {
 		// Fetch from GitHub
 		const remoteIssue = (
 			await this.gh.issues.get({
-				...dep,
+				owner: dep.owner,
+				repo: dep.repo,
 				issue_number: dep.number,
 			})
 		).data;

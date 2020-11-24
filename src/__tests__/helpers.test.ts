@@ -2,8 +2,12 @@
 import issueRegex from 'issue-regex';
 
 // Ours
-import { Issue } from '../types';
-import { buildDependencyRegex, DependencyExtractor } from '../helpers';
+import { GithubClient, Issue } from '../types';
+import {
+	buildDependencyRegex,
+	DependencyExtractor,
+	DependencyResolver,
+} from '../helpers';
 
 test('buildDependencyRegex', () => {
 	const regex = buildDependencyRegex(['depends on', 'blocked by']);
@@ -89,5 +93,78 @@ describe('DependencyExtractor', () => {
 			const issue = { body: t.text, number: 1 } as Issue;
 			expect(extractor.fromIssue(issue)).toEqual(t.expected);
 		});
+	});
+});
+
+describe('DependencyResolver', () => {
+	let gh: GithubClient;
+	let issuesGet: jest.Mock<any, any>;
+	let resolver: DependencyResolver;
+
+	const repo = {
+		owner: 'facebook',
+		repo: 'react',
+	};
+
+	const contextIssues = [1, 2, 3].map((number) => ({
+		title: `Issue ${number}`,
+		number,
+	})) as Issue[];
+
+	beforeEach(() => {
+		issuesGet = jest.fn();
+
+		gh = {
+			issues: {
+				get: issuesGet as any,
+			},
+		} as GithubClient;
+
+		resolver = new DependencyResolver(gh, contextIssues, repo);
+	});
+
+	it('resolves context issues', async () => {
+		expect(
+			await resolver.get({
+				...repo,
+				number: 1,
+			})
+		).toEqual({ number: 1, title: 'Issue 1' });
+	});
+
+	it('fetches unknown issues', async () => {
+		const issue = { number: 4, title: 'Issue 4' };
+		issuesGet.mockResolvedValue({ data: issue });
+
+		const dependency = {
+			...repo,
+			number: 4,
+		};
+
+		const resolvedIssue = await resolver.get(dependency);
+
+		expect(issuesGet).toHaveBeenCalledWith({
+			...repo,
+			issue_number: 4,
+		});
+
+		expect(resolvedIssue).toEqual(issue);
+	});
+
+	it('caches fetched issues', async () => {
+		const issue = { number: 4, title: 'Issue 4' };
+		issuesGet.mockResolvedValue({ data: issue });
+
+		const dependency = {
+			...repo,
+			number: 4,
+		};
+
+		await resolver.get(dependency);
+		await resolver.get(dependency);
+		const resolvedIssue = await resolver.get(dependency);
+
+		expect(resolvedIssue).toEqual(issue);
+		expect(issuesGet).toHaveBeenCalledTimes(1);
 	});
 });

@@ -266,7 +266,11 @@ class DependencyResolver {
                 return cachedIssue;
             }
             // Fetch from GitHub
-            const remoteIssue = (yield this.gh.issues.get(Object.assign(Object.assign({}, dep), { issue_number: dep.number }))).data;
+            const remoteIssue = (yield this.gh.issues.get({
+                owner: dep.owner,
+                repo: dep.repo,
+                issue_number: dep.number,
+            })).data;
             this.cache.set(key, {
                 issue: remoteIssue,
                 repo: {
