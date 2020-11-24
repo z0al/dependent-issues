@@ -8,6 +8,7 @@ import { ActionContext, Issue } from './types';
 export async function getActionContext(): Promise<ActionContext> {
 	const config = {
 		actionName: 'Dependent Issues',
+		actionRepoURL: 'https://github.com/z0al/dependent-issues',
 		commentSignature:
 			'<!-- By Dependent Issues (Action) - DO NOT REMOVE -->',
 		label: core.getInput('label'),

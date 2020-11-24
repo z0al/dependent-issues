@@ -1,4 +1,5 @@
 // Packages
+import { dequal } from 'dequal';
 import uniqBy from 'lodash.uniqby';
 import issueRegex from 'issue-regex';
 
@@ -24,7 +25,9 @@ export function createDependencyRegex(keywords: string[]) {
 }
 
 export function formatDependency(dep: Dependency, repo?: Repository) {
-	if (dep.owner === repo?.owner && dep.repo === repo.repo) {
+	const depRepo = { owner: dep.owner, repo: dep.repo };
+
+	if (dequal(depRepo, repo)) {
 		return `#${dep.number}`;
 	}
 
@@ -192,6 +195,56 @@ export class IssueManager {
 			.trim()
 			.slice(0, -1 * this.config.commentSignature.length)
 			.trim();
+	}
+
+	public generateComment(
+		deps: Dependency[],
+		blockers: Dependency[],
+		config: ActionContext['config']
+	) {
+		const isBlocked = blockers.length > 0;
+
+		const header = isBlocked
+			? ':hourglass_flowing_sand: : Alright! Looks like we are ' +
+			  'going to wait for some *dependencies* to be resolved first:'
+			: ':tada: Great news! Looks like all the *dependencies* ' +
+			  'have been resolved:';
+
+		// e.g:
+		// * Microsoft/vscode#999
+		// * ~~github/atom#1~~
+		const dependencyList = deps
+			.map((dep) => {
+				if (blockers.find((blocker) => dequal(dep, blocker))) {
+					return { ...dep, blocker: true };
+				}
+				return { ...dep, blocker: false };
+			})
+			.map((dep) => {
+				const link = formatDependency(dep);
+				return '* ' + dep.blocker ? link : `~~${link}~~`;
+			})
+			.join('\n');
+
+		const dontWorry = isBlocked
+			? `Don't worry, I will keep an eye on the list above and keep ` +
+			  'this comment updated. '
+			: '';
+
+		const howToUpdate =
+			':bulb: To add or remove a dependency update this issue/PR ' +
+			'description.';
+
+		const footer =
+			`Brought to you by **[${config.actionName}]` +
+			`(${config.actionRepoURL})** (:robot: ). Happy coding!`;
+
+		return [
+			header,
+			dependencyList,
+			dontWorry + howToUpdate,
+			footer,
+		].join('\n\n');
 	}
 
 	async writeComment(issue: Issue, text: string, create = false) {

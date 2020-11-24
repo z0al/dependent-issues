@@ -19,6 +19,7 @@ export type ActionContext = {
 	config: {
 		actionName: string;
 		commentSignature: string;
+		actionRepoURL: string;
 		label: string;
 		issues: string;
 		keywords: string[];

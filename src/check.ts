@@ -25,10 +25,18 @@ export async function checkIssues(context: ActionContext) {
 			.filter((depIssue) => depIssue.state === 'open')
 			.map((iss) => ({ ...repo, number: iss.number } as Dependency));
 
+		const isBlocked = blockers.length > 0;
+
 		// Toggle label
-		blockers.length === 0
-			? await manager.removeLabel(issue)
-			: await manager.addLabel(issue);
+		isBlocked
+			? await manager.addLabel(issue)
+			: await manager.removeLabel(issue);
+
+		await manager.writeComment(
+			issue,
+			manager.generateComment(dependencies, blockers, config),
+			!isBlocked
+		);
 
 		await manager.updateCommitStatus(issue, blockers);
 	}

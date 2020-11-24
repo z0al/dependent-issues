@@ -83,10 +83,12 @@ function checkIssues(context) {
             const blockers = dependencyIssues
                 .filter((depIssue) => depIssue.state === 'open')
                 .map((iss) => (Object.assign(Object.assign({}, repo), { number: iss.number })));
+            const isBlocked = blockers.length > 0;
             // Toggle label
-            blockers.length === 0
-                ? yield manager.removeLabel(issue)
-                : yield manager.addLabel(issue);
+            isBlocked
+                ? yield manager.addLabel(issue)
+                : yield manager.removeLabel(issue);
+            yield manager.writeComment(issue, manager.generateComment(dependencies, blockers, config), !isBlocked);
             yield manager.updateCommitStatus(issue, blockers);
         }
     });
@@ -138,6 +140,7 @@ function getActionContext() {
     return __awaiter(this, void 0, void 0, function* () {
         const config = {
             actionName: 'Dependent Issues',
+            actionRepoURL: 'https://github.com/z0al/dependent-issues',
             commentSignature: '<!-- By Dependent Issues (Action) - DO NOT REMOVE -->',
             label: core.getInput('label'),
             issues: core.getInput('issues'),
@@ -204,6 +207,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.IssueManager = exports.DependencyResolver = exports.DependencyExtractor = exports.formatDependency = exports.createDependencyRegex = void 0;
 // Packages
+const dequal_1 = __webpack_require__(8713);
 const lodash_uniqby_1 = __importDefault(__webpack_require__(3586));
 const issue_regex_1 = __importDefault(__webpack_require__(2506));
 const ISSUE_REGEX = issue_regex_1.default();
@@ -214,7 +218,8 @@ function createDependencyRegex(keywords) {
 }
 exports.createDependencyRegex = createDependencyRegex;
 function formatDependency(dep, repo) {
-    if (dep.owner === (repo === null || repo === void 0 ? void 0 : repo.owner) && dep.repo === repo.repo) {
+    const depRepo = { owner: dep.owner, repo: dep.repo };
+    if (dequal_1.dequal(depRepo, repo)) {
         return `#${dep.number}`;
     }
     return `${dep.owner}/${dep.repo}#${dep.number}`;
@@ -333,6 +338,43 @@ class IssueManager {
             .trim()
             .slice(0, -1 * this.config.commentSignature.length)
             .trim();
+    }
+    generateComment(deps, blockers, config) {
+        const isBlocked = blockers.length > 0;
+        const header = isBlocked
+            ? ':hourglass_flowing_sand: : Alright! Looks like we are ' +
+                'going to wait for some *dependencies* to be resolved first:'
+            : ':tada: Great news! Looks like all the *dependencies* ' +
+                'have been resolved:';
+        // e.g:
+        // * Microsoft/vscode#999
+        // * ~~github/atom#1~~
+        const dependencyList = deps
+            .map((dep) => {
+            if (blockers.find((blocker) => dequal_1.dequal(dep, blocker))) {
+                return Object.assign(Object.assign({}, dep), { blocker: true });
+            }
+            return Object.assign(Object.assign({}, dep), { blocker: false });
+        })
+            .map((dep) => {
+            const link = formatDependency(dep);
+            return '* ' + dep.blocker ? link : 0;
+        })
+            .join('\n');
+        const dontWorry = isBlocked
+            ? `Don't worry, I will keep an eye on the list above and keep ` +
+                'this comment updated. '
+            : '';
+        const howToUpdate = ':bulb: To add or remove a dependency update this issue/PR ' +
+            'description.';
+        const footer = `Brought to you by **[${config.actionName}]` +
+            `(${config.actionRepoURL})** (:robot: ). Happy coding!`;
+        return [
+            header,
+            dependencyList,
+            dontWorry + howToUpdate,
+            footer,
+        ].join('\n\n');
     }
     writeComment(issue, text, create = false) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -4162,6 +4204,98 @@ class Deprecation extends Error {
 
 exports.Deprecation = Deprecation;
 
+
+/***/ }),
+
+/***/ 8713:
+/***/ ((__unused_webpack_module, exports) => {
+
+var has = Object.prototype.hasOwnProperty;
+
+function find(iter, tar, key) {
+	for (key of iter.keys()) {
+		if (dequal(key, tar)) return key;
+	}
+}
+
+function dequal(foo, bar) {
+	var ctor, len, tmp;
+	if (foo === bar) return true;
+
+	if (foo && bar && (ctor=foo.constructor) === bar.constructor) {
+		if (ctor === Date) return foo.getTime() === bar.getTime();
+		if (ctor === RegExp) return foo.toString() === bar.toString();
+
+		if (ctor === Array) {
+			if ((len=foo.length) === bar.length) {
+				while (len-- && dequal(foo[len], bar[len]));
+			}
+			return len === -1;
+		}
+
+		if (ctor === Set) {
+			if (foo.size !== bar.size) {
+				return false;
+			}
+			for (len of foo) {
+				tmp = len;
+				if (tmp && typeof tmp === 'object') {
+					tmp = find(bar, tmp);
+					if (!tmp) return false;
+				}
+				if (!bar.has(tmp)) return false;
+			}
+			return true;
+		}
+
+		if (ctor === Map) {
+			if (foo.size !== bar.size) {
+				return false;
+			}
+			for (len of foo) {
+				tmp = len[0];
+				if (tmp && typeof tmp === 'object') {
+					tmp = find(bar, tmp);
+					if (!tmp) return false;
+				}
+				if (!dequal(len[1], bar.get(tmp))) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		if (ctor === ArrayBuffer) {
+			foo = new Uint8Array(foo);
+			bar = new Uint8Array(bar);
+		} else if (ctor === DataView) {
+			if ((len=foo.byteLength) === bar.byteLength) {
+				while (len-- && foo.getInt8(len) === bar.getInt8(len));
+			}
+			return len === -1;
+		}
+
+		if (ArrayBuffer.isView(foo)) {
+			if ((len=foo.byteLength) === bar.byteLength) {
+				while (len-- && foo[len] === bar[len]);
+			}
+			return len === -1;
+		}
+
+		if (!ctor || typeof foo === 'object') {
+			len = 0;
+			for (ctor in foo) {
+				if (has.call(foo, ctor) && ++len && !has.call(bar, ctor)) return false;
+				if (!(ctor in bar) || !dequal(foo[ctor], bar[ctor])) return false;
+			}
+			return Object.keys(bar).length === len;
+		}
+	}
+
+	return foo !== foo && bar !== bar;
+}
+
+exports.dequal = dequal;
 
 /***/ }),
 
