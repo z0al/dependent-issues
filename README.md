@@ -2,7 +2,7 @@
 
 > A GitHub Action for marking issues as dependent on another
 
-It works with both PRs and issues and supports cross-repository dependencies.
+It works with PRs and issues and supports cross-repository dependencies.
 
 ## Usage
 
