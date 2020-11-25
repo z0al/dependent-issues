@@ -12,7 +12,7 @@ export async function getActionContext(): Promise<ActionContext> {
 		commentSignature:
 			'<!-- By Dependent Issues (Action) - DO NOT REMOVE -->',
 		label: core.getInput('label'),
-		issues: core.getInput('issues'),
+		check_issues: core.getInput('check_issues'),
 		keywords: core
 			.getInput('keywords')
 			.trim()
@@ -51,7 +51,7 @@ export async function getActionContext(): Promise<ActionContext> {
 		};
 
 		const method =
-			config.issues === 'on'
+			config.check_issues === 'on'
 				? client.issues.listForRepo
 				: client.pulls.list;
 

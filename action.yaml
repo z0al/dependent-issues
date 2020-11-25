@@ -8,14 +8,14 @@ inputs:
     description: The label to use to mark dependent issues
     default: dependent
 
-  issues:
+  check_issues:
     required: false
-    description: Enable checking for issues
+    description: Enable checking for dependencies in issues
     default: off
 
   keywords:
     required: false
-    description: Keywords for marking dependencies
+    description: A comma-separated list of keywords
     default: depends on, blocked by
 
 runs:

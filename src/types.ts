@@ -23,7 +23,7 @@ export type ActionContext = {
 		commentSignature: string;
 		actionRepoURL: string;
 		label: string;
-		issues: string;
+		check_issues: string;
 		keywords: string[];
 	};
 };
