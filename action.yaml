@@ -2,6 +2,10 @@ name: Dependent Issues
 description: Mark issues as dependent on another
 author: Ahmed T. Ali
 
+branding:
+  icon: box
+  color: blue
+
 inputs:
   label:
     required: false
