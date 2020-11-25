@@ -1,8 +1,4 @@
-name: Update Release tags
-
-on:
-  release:
-    types: [published, edited]
+on: [release]
 
 jobs:
   actions-tagger:
@@ -11,5 +7,3 @@ jobs:
       - uses: Actions-R-Us/actions-tagger@latest
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-        with:
-          publish_latest_tag: true

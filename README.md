@@ -32,7 +32,7 @@ jobs:
 
 ## Environment variables
 
-- **GITHUB_TOKEN** (Required): A token to use for making API calls to GitHub. Use can set it to `secrets.GITHUB_TOKEN` as shown in the example above.
+- **GITHUB_TOKEN** (Required): A token to use for making API calls to GitHub.
 
 ## Credits
 
