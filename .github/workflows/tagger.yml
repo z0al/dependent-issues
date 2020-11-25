@@ -1,4 +1,4 @@
-on: [release]
+on: [release, create]
 
 jobs:
   actions-tagger:

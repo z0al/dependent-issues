@@ -205,7 +205,7 @@ export class IssueManager {
 		const isBlocked = dependencies.some((dep) => dep.blocker);
 
 		const header = isBlocked
-			? ':hourglass_flowing_sand: : Alright! Looks like we ' +
+			? ':hourglass_flowing_sand: Alright! Looks like we ' +
 			  'need to wait for some *dependencies*:'
 			: ':tada: Great news! Looks like all the *dependencies* ' +
 			  'have been resolved:';

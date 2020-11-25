@@ -85,7 +85,7 @@ test('it works in default config', async () => {
 		issue_number: 1,
 		owner: 'owner',
 		repo: 'repo',
-		body: `:hourglass_flowing_sand: : Alright! Looks like we need to wait for some *dependencies*:
+		body: `:hourglass_flowing_sand: Alright! Looks like we need to wait for some *dependencies*:
 
 * owner/repo#2
 * user/another-repo#3
