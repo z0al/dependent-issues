@@ -60,25 +60,25 @@ function checkIssues(context) {
         const extractor = new helpers_1.DependencyExtractor(repo, config.keywords);
         const resolver = new helpers_1.DependencyResolver(client, context.issues, repo);
         for (const issue of context.issues) {
-            const dependencies = extractor.fromIssue(issue);
-            const dependencyIssues = yield Promise.all(dependencies.map((dep) => __awaiter(this, void 0, void 0, function* () {
-                return ({
-                    dep,
-                    issue: yield resolver.get(dep),
-                });
+            let dependencies = extractor.fromIssue(issue);
+            if (dependencies.length === 0) {
+                yield manager.removeAnyComments(issue);
+                return yield manager.updateCommitStatus(issue, []);
+            }
+            let isBlocked = false;
+            dependencies = yield Promise.all(dependencies.map((dep) => __awaiter(this, void 0, void 0, function* () {
+                const issue = yield resolver.get(dep);
+                if (issue.state === 'open') {
+                    isBlocked = true;
+                }
+                return Object.assign(Object.assign({}, dep), { blocker: issue.state === 'open' });
             })));
-            const blockers = dependencyIssues
-                .filter((data) => data.issue.state === 'open')
-                .map((data) => data.dep);
-            const isBlocked = blockers.length > 0;
             // Toggle label
             isBlocked
                 ? yield manager.addLabel(issue)
                 : yield manager.removeLabel(issue);
-            dependencies.length > 0
-                ? yield manager.writeComment(issue, manager.generateComment(dependencies, blockers, config), !isBlocked)
-                : /* TODO: remove existing comments if any*/ null;
-            yield manager.updateCommitStatus(issue, blockers);
+            yield manager.writeComment(issue, manager.generateComment(dependencies, dependencies, config), !isBlocked);
+            yield manager.updateCommitStatus(issue, dependencies);
         }
     });
 }
@@ -328,8 +328,8 @@ class IssueManager {
             .slice(0, -1 * this.config.commentSignature.length)
             .trim();
     }
-    generateComment(deps, blockers, config) {
-        const isBlocked = blockers.length > 0;
+    generateComment(deps, dependencies, config) {
+        const isBlocked = dependencies.some((dep) => dep.blocker);
         const header = isBlocked
             ? ':hourglass_flowing_sand: : Alright! Looks like we ' +
                 'need to wait for some *dependencies*:'
@@ -339,12 +339,6 @@ class IssueManager {
         // * facebook/react#999
         // * ~~facebook/react#1~~
         const dependencyList = deps
-            .map((dep) => {
-            if (blockers.find((blocker) => dequal_1.dequal(dep, blocker))) {
-                return Object.assign(Object.assign({}, dep), { blocker: true });
-            }
-            return Object.assign(Object.assign({}, dep), { blocker: false });
-        })
             .map((dep) => {
             const link = formatDependency(dep);
             return '* ' + (dep.blocker ? link : `~~${link}~~`);
@@ -385,17 +379,27 @@ class IssueManager {
                 : yield this.gh.issues.createComment(Object.assign(Object.assign({}, commentParams), { issue_number: issue.number }));
         });
     }
-    updateCommitStatus(issue, blockers) {
+    removeAnyComments(issue) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const issueComments = yield this.gh.paginate(this.gh.issues.listComments, Object.assign(Object.assign({}, this.repo), { issue_number: issue.number, per_page: 100 }));
+            const existingComments = issueComments.filter((comment) => this.isSigned(comment.body));
+            yield Promise.all(existingComments.map((comment) => this.gh.issues.deleteComment(Object.assign(Object.assign({}, this.repo), { comment_id: comment.id }))));
+        });
+    }
+    updateCommitStatus(issue, dependencies) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!issue.pull_request) {
                 return;
             }
+            const blockers = dependencies.filter((dep) => dep.blocker);
             const isBlocked = blockers.length > 0;
             const firstDependency = isBlocked
                 ? formatDependency(blockers[0], this.repo)
                 : '';
             const description = !isBlocked
-                ? 'All listed issues are closed'
+                ? dependencies.length === 0
+                    ? 'No dependencies'
+                    : 'All dependencies are resolved'
                 : blockers.length == 1
                     ? `Blocked by ${firstDependency}`
                     : `Blocked by ${firstDependency} and ${blockers.length - 1} more issues`;

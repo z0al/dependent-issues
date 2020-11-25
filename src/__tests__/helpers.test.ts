@@ -257,7 +257,7 @@ describe('IssueManager', () => {
 
 			expect(gh.repos.createCommitStatus).toHaveBeenCalledWith({
 				...repo,
-				description: 'All listed issues are closed',
+				description: 'No dependencies',
 				state: 'success',
 				sha: pr.head.sha,
 				context: config.actionName,
@@ -268,9 +268,9 @@ describe('IssueManager', () => {
 			const issue = { number: 141, pull_request: {} } as any;
 
 			await manager.updateCommitStatus(issue, [
-				{ repo: 'repo', owner: 'owner', number: 999 },
-				{} as any, // shouldn't be used
-				{} as any, // shouldn't be used
+				{ repo: 'repo', owner: 'owner', number: 999, blocker: true },
+				{ blocker: true } as any,
+				{ blocker: true } as any,
 			]);
 
 			expect(gh.pulls.get).toHaveBeenCalledWith({

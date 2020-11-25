@@ -199,10 +199,10 @@ export class IssueManager {
 
 	public generateComment(
 		deps: Dependency[],
-		blockers: Dependency[],
+		dependencies: Dependency[],
 		config: ActionContext['config']
 	) {
-		const isBlocked = blockers.length > 0;
+		const isBlocked = dependencies.some((dep) => dep.blocker);
 
 		const header = isBlocked
 			? ':hourglass_flowing_sand: : Alright! Looks like we ' +
@@ -214,12 +214,6 @@ export class IssueManager {
 		// * facebook/react#999
 		// * ~~facebook/react#1~~
 		const dependencyList = deps
-			.map((dep) => {
-				if (blockers.find((blocker) => dequal(dep, blocker))) {
-					return { ...dep, blocker: true };
-				}
-				return { ...dep, blocker: false };
-			})
 			.map((dep) => {
 				const link = formatDependency(dep);
 				return '* ' + (dep.blocker ? link : `~~${link}~~`);
@@ -288,18 +282,40 @@ export class IssueManager {
 			  });
 	}
 
-	async updateCommitStatus(issue: Issue, blockers: Dependency[]) {
+	async removeAnyComments(issue: Issue) {
+		const issueComments = await this.gh.paginate(
+			this.gh.issues.listComments,
+			{ ...this.repo, issue_number: issue.number, per_page: 100 }
+		);
+		const existingComments = issueComments.filter((comment) =>
+			this.isSigned(comment.body)
+		);
+
+		await Promise.all(
+			existingComments.map((comment) =>
+				this.gh.issues.deleteComment({
+					...this.repo,
+					comment_id: comment.id,
+				})
+			)
+		);
+	}
+
+	async updateCommitStatus(issue: Issue, dependencies: Dependency[]) {
 		if (!issue.pull_request) {
 			return;
 		}
 
+		const blockers = dependencies.filter((dep) => dep.blocker);
 		const isBlocked = blockers.length > 0;
 		const firstDependency = isBlocked
 			? formatDependency(blockers[0], this.repo)
 			: '';
 
 		const description = !isBlocked
-			? 'All listed issues are closed'
+			? dependencies.length === 0
+				? 'No dependencies'
+				: 'All dependencies are resolved'
 			: blockers.length == 1
 			? `Blocked by ${firstDependency}`
 			: `Blocked by ${firstDependency} and ${

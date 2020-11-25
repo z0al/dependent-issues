@@ -15,34 +15,37 @@ export async function checkIssues(context: ActionContext) {
 	const resolver = new DependencyResolver(client, context.issues, repo);
 
 	for (const issue of context.issues) {
-		const dependencies = extractor.fromIssue(issue);
+		let dependencies = extractor.fromIssue(issue);
 
-		const dependencyIssues = await Promise.all(
-			dependencies.map(async (dep) => ({
-				dep,
-				issue: await resolver.get(dep),
-			}))
+		if (dependencies.length === 0) {
+			await manager.removeAnyComments(issue);
+			return await manager.updateCommitStatus(issue, []);
+		}
+
+		let isBlocked = false;
+
+		dependencies = await Promise.all(
+			dependencies.map(async (dep) => {
+				const issue = await resolver.get(dep);
+				if (issue.state === 'open') {
+					isBlocked = true;
+				}
+
+				return { ...dep, blocker: issue.state === 'open' };
+			})
 		);
-
-		const blockers = dependencyIssues
-			.filter((data) => data.issue.state === 'open')
-			.map((data) => data.dep);
-
-		const isBlocked = blockers.length > 0;
 
 		// Toggle label
 		isBlocked
 			? await manager.addLabel(issue)
 			: await manager.removeLabel(issue);
 
-		dependencies.length > 0
-			? await manager.writeComment(
-					issue,
-					manager.generateComment(dependencies, blockers, config),
-					!isBlocked
-			  )
-			: /* TODO: remove existing comments if any*/ null;
+		await manager.writeComment(
+			issue,
+			manager.generateComment(dependencies, dependencies, config),
+			!isBlocked
+		);
 
-		await manager.updateCommitStatus(issue, blockers);
+		await manager.updateCommitStatus(issue, dependencies);
 	}
 }

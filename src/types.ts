@@ -9,7 +9,9 @@ export type Issue = UnwrapPromise<
 	ReturnType<GithubClient['issues']['get']>
 >['data'];
 
-export type Dependency = Required<typeof github.context.issue>;
+export type Dependency = Required<typeof github.context.issue> & {
+	blocker?: boolean;
+};
 export type Repository = Required<typeof github.context.repo>;
 
 export type ActionContext = {
