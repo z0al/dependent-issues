@@ -36,9 +36,7 @@ jobs:
 
 ## Credits
 
-The Logo is designed by [Freepik](https://www.freepik.com/free-vector/green-and-blue-retro-robots-collection_721192.htm). Modified by [Ahmed T. Ali](https://github.com/z0al).
-
-Special thanks to [Jason Etcovitch](https://github.com/JasonEtco) for their help, including the original bot idea.
+Special thanks to [Jason Etcovitch](https://github.com/JasonEtco) for the original bot idea.
 
 ## License
 
