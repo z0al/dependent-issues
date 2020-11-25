@@ -18,6 +18,7 @@ export async function checkIssues(context: ActionContext) {
 		let dependencies = extractor.fromIssue(issue);
 
 		if (dependencies.length === 0) {
+			await manager.removeLabel(issue);
 			await manager.removeAnyComments(issue);
 			return await manager.updateCommitStatus(issue, []);
 		}

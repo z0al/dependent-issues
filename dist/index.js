@@ -84,6 +84,7 @@ function checkIssues(context) {
         for (const issue of context.issues) {
             let dependencies = extractor.fromIssue(issue);
             if (dependencies.length === 0) {
+                yield manager.removeLabel(issue);
                 yield manager.removeAnyComments(issue);
                 return yield manager.updateCommitStatus(issue, []);
             }
