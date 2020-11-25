@@ -24,6 +24,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
+Here how it can look like in practice:
+
+![example](./demo.png)
+
 ## Inputs
 
 - **label** (Optional): The label to use to mark dependent issues. Default `dependent`.
