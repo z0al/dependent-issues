@@ -22,6 +22,3 @@ jobs:
       - env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: yarn semantic-release
-      - uses: Actions-R-Us/actions-tagger@latest
-        env:
-          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'

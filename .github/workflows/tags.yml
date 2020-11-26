@@ -1,0 +1,19 @@
+name: Update Tags
+
+on:
+  release:
+    types:
+      - published
+      - edited
+
+jobs:
+  action-tagger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: Actions-R-Us/actions-tagger@latest
+        with:
+          publish_latest_tag: false
+          prefer_branch_releases: false
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN  }}'
