@@ -1,7 +1,10 @@
+name: Test and Release
+
 on: [push, pull_request]
 
 jobs:
   test:
+    name: Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -9,6 +12,7 @@ jobs:
       - run: npm run test
       - run: npm run lint
   release:
+    name: Release
     needs: test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -18,3 +22,6 @@ jobs:
       - env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: yarn semantic-release
+      - uses: Actions-R-Us/actions-tagger@latest
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
