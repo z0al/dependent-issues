@@ -36,14 +36,18 @@ export async function getActionContext(): Promise<ActionContext> {
 
 	// Only run checks for the context.issue (if any)
 	if (issue?.number) {
-		issues = [
-			(await client.issues.get({ ...repo, issue_number: issue.number }))
-				.data,
-		];
+		const remoteIssue = (
+			await client.issues.get({ ...repo, issue_number: issue.number })
+		).data;
+
+		// Ignore closed PR/issues
+		if (remoteIssue.state === 'open') {
+			issues = [remoteIssue];
+		}
 	}
 
 	// Otherwise, check all open issues
-	if (issues.length === 0) {
+	else {
 		const options = {
 			...repo,
 			state: 'open' as 'open',

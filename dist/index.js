@@ -173,13 +173,14 @@ function getActionContext() {
         let issues = [];
         // Only run checks for the context.issue (if any)
         if (issue === null || issue === void 0 ? void 0 : issue.number) {
-            issues = [
-                (yield client.issues.get(Object.assign(Object.assign({}, repo), { issue_number: issue.number })))
-                    .data,
-            ];
+            const remoteIssue = (yield client.issues.get(Object.assign(Object.assign({}, repo), { issue_number: issue.number }))).data;
+            // Ignore closed PR/issues
+            if (remoteIssue.state === 'open') {
+                issues = [remoteIssue];
+            }
         }
         // Otherwise, check all open issues
-        if (issues.length === 0) {
+        else {
             const options = Object.assign(Object.assign({}, repo), { state: 'open', per_page: 100 });
             const method = config.check_issues === 'on'
                 ? client.issues.listForRepo
