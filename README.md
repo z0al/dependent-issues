@@ -33,7 +33,7 @@ jobs:
           # setting the value to "on". Default "off"
           check_issues: off
 
-          # (Optional): A comma-separated list of keywords. Default
+          # (Optional) A comma-separated list of keywords. Default
           # "depends on, blocked by"
           keywords: depends on, blocked by
 ```
