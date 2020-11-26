@@ -2,7 +2,6 @@
 	"name": "dependent-issues",
 	"version": "0.0.0-development",
 	"private": true,
-	"description": "Mark issues as dependent on another",
 	"main": "lib/action.js",
 	"scripts": {
 		"build": "tsc",
@@ -18,11 +17,6 @@
 		"type": "git",
 		"url": "https://github.com/z0al/dependent-issues.git"
 	},
-	"keywords": [
-		"actions",
-		"node",
-		"setup"
-	],
 	"author": "",
 	"license": "MIT",
 	"dependencies": {
@@ -35,7 +29,7 @@
 		"@types/jest": "^26.0.15",
 		"@types/js-yaml": "^3.12.5",
 		"@types/lodash.uniqby": "^4.7.6",
-		"@types/node": "^14.14.9",
+		"@types/node": "^14.14.10",
 		"@typescript-eslint/parser": "^4.8.2",
 		"@vercel/ncc": "^0.25.1",
 		"dequal": "^2.0.2",
@@ -44,7 +38,7 @@
 		"husky": "^5.0.4",
 		"jest": "^26.6.3",
 		"js-yaml": "^3.14.0",
-		"prettier": "2.1.1",
+		"prettier": "^2.2.0",
 		"rimraf": "^3.0.2",
 		"semantic-release": "^17.3.0",
 		"ts-jest": "^26.4.4",

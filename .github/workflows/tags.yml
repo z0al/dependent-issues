@@ -3,6 +3,7 @@ name: Update Tags
 on:
   release:
     types:
+      - created
       - published
       - edited
 
