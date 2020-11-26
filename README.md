@@ -15,7 +15,7 @@ on:
   issues:
   pull_request:
   schedule:
-    - cron: '0 0 * * *' # daily
+    - cron: '0 0 * * *' # schedule daily check
 
 jobs:
   check:
@@ -23,7 +23,19 @@ jobs:
     steps:
       - uses: z0al/dependent-issues@v1
         env:
+          # (Required) The token to use to make API calls to GitHub.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # (Optional) The label to use to mark dependent issues
+          label: dependent
+
+          # (Optional) Enable checking for dependencies in issues. Enable by
+          # setting the value to "on". Default "off"
+          check_issues: off
+
+          # (Optional): A comma-separated list of keywords. Default
+          # "depends on, blocked by"
+          keywords: depends on, blocked by
 ```
 
 Here how it can look like in practice:
@@ -38,7 +50,7 @@ Here how it can look like in practice:
 
 ## Environment variables
 
-- **GITHUB_TOKEN** (Required): A token to use for making API calls to GitHub.
+- **GITHUB_TOKEN** (Required): The token to use to make API calls to GitHub.
 
 ## Credits
 
