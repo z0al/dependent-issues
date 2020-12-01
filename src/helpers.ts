@@ -56,7 +56,7 @@ export class DependencyExtractor {
 	public fromIssue(issue: Issue) {
 		const dependencies: Dependency[] = [];
 
-		for (const issueLink of this.getIssueLinks(issue.body)) {
+		for (const issueLink of this.getIssueLinks(issue.body || '')) {
 			// Can be '#number' or 'owner/repo#number'
 			// 1) #number
 			if (issueLink.startsWith('#')) {
@@ -150,10 +150,16 @@ export class IssueManager {
 		private config: ActionContext['config']
 	) {}
 
-	async addLabel(issue: Issue) {
-		const shouldAddLabel = !issue.labels.find(
-			(lbl) => lbl.name === this.config.label
+	hasLabel(issue: Issue) {
+		const labels = issue.labels.map((label) =>
+			typeof label === 'string' ? label : label.name
 		);
+
+		return labels.includes(this.config.label);
+	}
+
+	async addLabel(issue: Issue) {
+		const shouldAddLabel = !this.hasLabel(issue);
 
 		if (shouldAddLabel) {
 			await this.gh.issues.addLabels({
@@ -165,9 +171,7 @@ export class IssueManager {
 	}
 
 	async removeLabel(issue: Issue) {
-		const shouldRemoveLabel = issue.labels.find(
-			(lbl) => lbl.name === this.config.label
-		);
+		const shouldRemoveLabel = this.hasLabel(issue);
 
 		if (shouldRemoveLabel) {
 			await this.gh.issues.removeLabel({
@@ -186,11 +190,19 @@ export class IssueManager {
 		return text.trim() + '\n' + this.config.commentSignature;
 	}
 
-	private isSigned(text: string) {
+	private isSigned(text?: string) {
+		if (!text) {
+			return false;
+		}
+
 		return text.trim().endsWith(this.config.commentSignature);
 	}
 
-	private originalText(signed: string) {
+	private originalText(signed?: string) {
+		if (!signed) {
+			return '';
+		}
+
 		return signed
 			.trim()
 			.slice(0, -1 * this.config.commentSignature.length)
