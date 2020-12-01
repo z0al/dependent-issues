@@ -282,7 +282,7 @@ export class IssueManager {
 			  });
 	}
 
-	async removeAnyComments(issue: Issue) {
+	async removeActionComments(issue: Issue) {
 		const issueComments = await this.gh.paginate(
 			this.gh.issues.listComments,
 			{ ...this.repo, issue_number: issue.number, per_page: 100 }

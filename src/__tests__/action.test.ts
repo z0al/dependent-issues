@@ -18,6 +18,8 @@ jest.mock('@actions/core', () => {
 			.fn()
 			.mockImplementation((key: string) => (inputs as any)[key]),
 		debug: jest.fn(),
+		startGroup: jest.fn(),
+		endGroup: jest.fn(),
 	};
 });
 

@@ -6,6 +6,8 @@ import * as github from '@actions/github';
 import { ActionContext, Issue } from './types';
 
 export async function getActionContext(): Promise<ActionContext> {
+	core.startGroup('Context');
+
 	const config = {
 		actionName: 'Dependent Issues',
 		actionRepoURL: 'https://github.com/z0al/dependent-issues',
@@ -36,6 +38,7 @@ export async function getActionContext(): Promise<ActionContext> {
 
 	// Only run checks for the context.issue (if any)
 	if (issue?.number) {
+		core.debug(`Payload issue: #${issue?.number}`);
 		const remoteIssue = (
 			await client.issues.get({ ...repo, issue_number: issue.number })
 		).data;
@@ -48,6 +51,7 @@ export async function getActionContext(): Promise<ActionContext> {
 
 	// Otherwise, check all open issues
 	else {
+		core.debug(`Payload issue: None`);
 		const options = {
 			...repo,
 			state: 'open' as 'open',
@@ -60,7 +64,10 @@ export async function getActionContext(): Promise<ActionContext> {
 				: client.pulls.list;
 
 		issues = (await client.paginate(method, options)) as Issue[];
+		core.debug(`No. of open issues: ${issues.length}`);
 	}
+
+	core.endGroup();
 
 	return {
 		client,

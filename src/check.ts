@@ -1,3 +1,6 @@
+// Packages
+import * as core from '@actions/core';
+
 // Ours
 import { ActionContext } from './types';
 
@@ -5,6 +8,7 @@ import {
 	IssueManager,
 	DependencyResolver,
 	DependencyExtractor,
+	formatDependency,
 } from './helpers';
 
 export async function checkIssues(context: ActionContext) {
@@ -15,15 +19,26 @@ export async function checkIssues(context: ActionContext) {
 	const resolver = new DependencyResolver(client, context.issues, repo);
 
 	for (const issue of context.issues) {
+		core.startGroup(`Checking #${issue.number}`);
 		let dependencies = extractor.fromIssue(issue);
 
 		if (dependencies.length === 0) {
+			core.debug('No dependencies found. Running clean-up');
 			await manager.removeLabel(issue);
-			await manager.removeAnyComments(issue);
-			return await manager.updateCommitStatus(issue, []);
+			await manager.removeActionComments(issue);
+			await manager.updateCommitStatus(issue, []);
+
+			core.endGroup();
+			continue;
 		}
 
 		let isBlocked = false;
+
+		core.debug(
+			`Depends on: ${dependencies
+				.map((dep) => formatDependency(dep, repo))
+				.join(', ')}`
+		);
 
 		dependencies = await Promise.all(
 			dependencies.map(async (dep) => {
@@ -36,17 +51,30 @@ export async function checkIssues(context: ActionContext) {
 			})
 		);
 
+		core.debug(
+			`Blocked by: ${dependencies
+				.filter((dep) => dep.blocker)
+				.map((dep) => formatDependency(dep, repo))
+				.join(', ')}`
+		);
+
+		core.debug('Updating labels');
 		// Toggle label
 		isBlocked
 			? await manager.addLabel(issue)
 			: await manager.removeLabel(issue);
 
+		core.debug('Updating Action comments');
 		await manager.writeComment(
 			issue,
 			manager.generateComment(dependencies, dependencies, config),
 			!isBlocked
 		);
 
+		core.debug(
+			`Updating PR status${issue.pull_request ? '' : '. Skipped'}`
+		);
 		await manager.updateCommitStatus(issue, dependencies);
+		core.endGroup();
 	}
 }

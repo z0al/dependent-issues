@@ -63,6 +63,25 @@ exports.start = start;
 
 "use strict";
 
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -74,6 +93,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.checkIssues = void 0;
+// Packages
+const core = __importStar(__webpack_require__(2186));
 const helpers_1 = __webpack_require__(5008);
 function checkIssues(context) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -82,13 +103,20 @@ function checkIssues(context) {
         const extractor = new helpers_1.DependencyExtractor(repo, config.keywords);
         const resolver = new helpers_1.DependencyResolver(client, context.issues, repo);
         for (const issue of context.issues) {
+            core.startGroup(`Checking #${issue.number}`);
             let dependencies = extractor.fromIssue(issue);
             if (dependencies.length === 0) {
+                core.debug('No dependencies found. Running clean-up');
                 yield manager.removeLabel(issue);
-                yield manager.removeAnyComments(issue);
-                return yield manager.updateCommitStatus(issue, []);
+                yield manager.removeActionComments(issue);
+                yield manager.updateCommitStatus(issue, []);
+                core.endGroup();
+                continue;
             }
             let isBlocked = false;
+            core.debug(`Depends on: ${dependencies
+                .map((dep) => helpers_1.formatDependency(dep, repo))
+                .join(', ')}`);
             dependencies = yield Promise.all(dependencies.map((dep) => __awaiter(this, void 0, void 0, function* () {
                 const issue = yield resolver.get(dep);
                 if (issue.state === 'open') {
@@ -96,12 +124,20 @@ function checkIssues(context) {
                 }
                 return Object.assign(Object.assign({}, dep), { blocker: issue.state === 'open' });
             })));
+            core.debug(`Blocked by: ${dependencies
+                .filter((dep) => dep.blocker)
+                .map((dep) => helpers_1.formatDependency(dep, repo))
+                .join(', ')}`);
+            core.debug('Updating labels');
             // Toggle label
             isBlocked
                 ? yield manager.addLabel(issue)
                 : yield manager.removeLabel(issue);
+            core.debug('Updating Action comments');
             yield manager.writeComment(issue, manager.generateComment(dependencies, dependencies, config), !isBlocked);
+            core.debug(`Updating PR status${issue.pull_request ? '' : '. Skipped'}`);
             yield manager.updateCommitStatus(issue, dependencies);
+            core.endGroup();
         }
     });
 }
@@ -150,6 +186,7 @@ const core = __importStar(__webpack_require__(2186));
 const github = __importStar(__webpack_require__(5438));
 function getActionContext() {
     return __awaiter(this, void 0, void 0, function* () {
+        core.startGroup('Context');
         const config = {
             actionName: 'Dependent Issues',
             actionRepoURL: 'https://github.com/z0al/dependent-issues',
@@ -173,6 +210,7 @@ function getActionContext() {
         let issues = [];
         // Only run checks for the context.issue (if any)
         if (issue === null || issue === void 0 ? void 0 : issue.number) {
+            core.debug(`Payload issue: #${issue === null || issue === void 0 ? void 0 : issue.number}`);
             const remoteIssue = (yield client.issues.get(Object.assign(Object.assign({}, repo), { issue_number: issue.number }))).data;
             // Ignore closed PR/issues
             if (remoteIssue.state === 'open') {
@@ -181,12 +219,15 @@ function getActionContext() {
         }
         // Otherwise, check all open issues
         else {
+            core.debug(`Payload issue: None`);
             const options = Object.assign(Object.assign({}, repo), { state: 'open', per_page: 100 });
             const method = config.check_issues === 'on'
                 ? client.issues.listForRepo
                 : client.pulls.list;
             issues = (yield client.paginate(method, options));
+            core.debug(`No. of open issues: ${issues.length}`);
         }
+        core.endGroup();
         return {
             client,
             config,
@@ -403,7 +444,7 @@ class IssueManager {
                 : yield this.gh.issues.createComment(Object.assign(Object.assign({}, commentParams), { issue_number: issue.number }));
         });
     }
-    removeAnyComments(issue) {
+    removeActionComments(issue) {
         return __awaiter(this, void 0, void 0, function* () {
             const issueComments = yield this.gh.paginate(this.gh.issues.listComments, Object.assign(Object.assign({}, this.repo), { issue_number: issue.number, per_page: 100 }));
             const existingComments = issueComments.filter((comment) => this.isSigned(comment.body));
