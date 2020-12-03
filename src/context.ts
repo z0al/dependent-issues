@@ -3,7 +3,7 @@ import * as core from '@actions/core';
 import * as github from '@actions/github';
 
 // Ours
-import { ActionContext, Issue } from './types';
+import { ActionContext, GithubClient, Issue } from './types';
 
 export async function getActionContext(): Promise<ActionContext> {
 	core.startGroup('Context');
@@ -30,7 +30,9 @@ export async function getActionContext(): Promise<ActionContext> {
 		throw new Error('env.GITHUB_TOKEN must not be empty');
 	}
 
-	const client = github.getOctokit(process.env.GITHUB_TOKEN);
+	const client = (github.getOctokit(
+		process.env.GITHUB_TOKEN
+	) as unknown) as GithubClient;
 
 	const { issue, repo } = github.context;
 

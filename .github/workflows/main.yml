@@ -8,9 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: npm install
-      - run: npm run test
-      - run: npm run lint
+      - run: yarn install
+      - run: yarn test
+      - run: yarn lint
   release:
     name: Release
     needs: test
