@@ -12,17 +12,17 @@ Create `.github/workflows/dependent-issues.yml` with the following content:
 name: Dependent Issues
 
 on:
-	issues:
-		types:
-			- opened
-			- edited
-			- reopened
-	pull_request_target:
-		types:
-			- opened
-			- edited
-			- reopened
-			- synchronize
+  issues:
+    types:
+      - opened
+      - edited
+      - reopened
+  pull_request_target:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
   schedule:
     - cron: '0 0 * * *' # schedule daily check
 
@@ -44,8 +44,7 @@ jobs:
 
           # (Optional) A comma-separated list of keywords. Default
           # "depends on, blocked by"
-					keywords: depends on, blocked by
-
+          keywords: depends on, blocked by
 ```
 
 Here how it can look like in practice:
