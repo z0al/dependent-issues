@@ -17,7 +17,7 @@ jest.mock('@actions/core', () => {
 		getInput: jest
 			.fn()
 			.mockImplementation((key: string) => (inputs as any)[key]),
-		debug: jest.fn(),
+		info: jest.fn(),
 		startGroup: jest.fn(),
 		endGroup: jest.fn(),
 	};

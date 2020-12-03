@@ -23,7 +23,7 @@ export async function checkIssues(context: ActionContext) {
 		let dependencies = extractor.fromIssue(issue);
 
 		if (dependencies.length === 0) {
-			core.debug('No dependencies found. Running clean-up');
+			core.info('No dependencies found. Running clean-up');
 			await manager.removeLabel(issue);
 			await manager.removeActionComments(issue);
 			await manager.updateCommitStatus(issue, []);
@@ -34,7 +34,7 @@ export async function checkIssues(context: ActionContext) {
 
 		let isBlocked = false;
 
-		core.debug(
+		core.info(
 			`Depends on: ${dependencies
 				.map((dep) => formatDependency(dep, repo))
 				.join(', ')}`
@@ -51,27 +51,27 @@ export async function checkIssues(context: ActionContext) {
 			})
 		);
 
-		core.debug(
+		core.info(
 			`Blocked by: ${dependencies
 				.filter((dep) => dep.blocker)
 				.map((dep) => formatDependency(dep, repo))
 				.join(', ')}`
 		);
 
-		core.debug('Updating labels');
+		core.info('Updating labels');
 		// Toggle label
 		isBlocked
 			? await manager.addLabel(issue)
 			: await manager.removeLabel(issue);
 
-		core.debug('Updating Action comments');
+		core.info('Updating Action comments');
 		await manager.writeComment(
 			issue,
 			manager.generateComment(dependencies, dependencies, config),
 			!isBlocked
 		);
 
-		core.debug(
+		core.info(
 			`Updating PR status${issue.pull_request ? '' : '. Skipped'}`
 		);
 		await manager.updateCommitStatus(issue, dependencies);

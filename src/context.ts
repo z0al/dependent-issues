@@ -38,7 +38,7 @@ export async function getActionContext(): Promise<ActionContext> {
 
 	// Only run checks for the context.issue (if any)
 	if (issue?.number) {
-		core.debug(`Payload issue: #${issue?.number}`);
+		core.info(`Payload issue: #${issue?.number}`);
 		const remoteIssue = (
 			await client.issues.get({ ...repo, issue_number: issue.number })
 		).data;
@@ -51,7 +51,7 @@ export async function getActionContext(): Promise<ActionContext> {
 
 	// Otherwise, check all open issues
 	else {
-		core.debug(`Payload issue: None`);
+		core.info(`Payload issue: None`);
 		const options = {
 			...repo,
 			state: 'open' as 'open',
@@ -64,7 +64,7 @@ export async function getActionContext(): Promise<ActionContext> {
 				: client.pulls.list;
 
 		issues = (await client.paginate(method, options)) as Issue[];
-		core.debug(`No. of open issues: ${issues.length}`);
+		core.info(`No. of open issues: ${issues.length}`);
 	}
 
 	core.endGroup();

@@ -106,7 +106,7 @@ function checkIssues(context) {
             core.startGroup(`Checking #${issue.number}`);
             let dependencies = extractor.fromIssue(issue);
             if (dependencies.length === 0) {
-                core.debug('No dependencies found. Running clean-up');
+                core.info('No dependencies found. Running clean-up');
                 yield manager.removeLabel(issue);
                 yield manager.removeActionComments(issue);
                 yield manager.updateCommitStatus(issue, []);
@@ -114,7 +114,7 @@ function checkIssues(context) {
                 continue;
             }
             let isBlocked = false;
-            core.debug(`Depends on: ${dependencies
+            core.info(`Depends on: ${dependencies
                 .map((dep) => helpers_1.formatDependency(dep, repo))
                 .join(', ')}`);
             dependencies = yield Promise.all(dependencies.map((dep) => __awaiter(this, void 0, void 0, function* () {
@@ -124,18 +124,18 @@ function checkIssues(context) {
                 }
                 return Object.assign(Object.assign({}, dep), { blocker: issue.state === 'open' });
             })));
-            core.debug(`Blocked by: ${dependencies
+            core.info(`Blocked by: ${dependencies
                 .filter((dep) => dep.blocker)
                 .map((dep) => helpers_1.formatDependency(dep, repo))
                 .join(', ')}`);
-            core.debug('Updating labels');
+            core.info('Updating labels');
             // Toggle label
             isBlocked
                 ? yield manager.addLabel(issue)
                 : yield manager.removeLabel(issue);
-            core.debug('Updating Action comments');
+            core.info('Updating Action comments');
             yield manager.writeComment(issue, manager.generateComment(dependencies, dependencies, config), !isBlocked);
-            core.debug(`Updating PR status${issue.pull_request ? '' : '. Skipped'}`);
+            core.info(`Updating PR status${issue.pull_request ? '' : '. Skipped'}`);
             yield manager.updateCommitStatus(issue, dependencies);
             core.endGroup();
         }
@@ -210,7 +210,7 @@ function getActionContext() {
         let issues = [];
         // Only run checks for the context.issue (if any)
         if (issue === null || issue === void 0 ? void 0 : issue.number) {
-            core.debug(`Payload issue: #${issue === null || issue === void 0 ? void 0 : issue.number}`);
+            core.info(`Payload issue: #${issue === null || issue === void 0 ? void 0 : issue.number}`);
             const remoteIssue = (yield client.issues.get(Object.assign(Object.assign({}, repo), { issue_number: issue.number }))).data;
             // Ignore closed PR/issues
             if (remoteIssue.state === 'open') {
@@ -219,13 +219,13 @@ function getActionContext() {
         }
         // Otherwise, check all open issues
         else {
-            core.debug(`Payload issue: None`);
+            core.info(`Payload issue: None`);
             const options = Object.assign(Object.assign({}, repo), { state: 'open', per_page: 100 });
             const method = config.check_issues === 'on'
                 ? client.issues.listForRepo
                 : client.pulls.list;
             issues = (yield client.paginate(method, options));
-            core.debug(`No. of open issues: ${issues.length}`);
+            core.info(`No. of open issues: ${issues.length}`);
         }
         core.endGroup();
         return {
