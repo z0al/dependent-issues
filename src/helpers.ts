@@ -25,7 +25,7 @@ export function formatDependency(dep: Dependency, repo?: Repository) {
 export class DependencyExtractor {
 	private regex: RegExp;
 	private issueRegex = IssueRegex();
-	private urlRegex = /https?:\/\/github\.com\/(?:\w[\w-.]+\/\w[\w-.]+|\B)\/(?:issues|pulls)\/[1-9]\d*\b/;
+	private urlRegex = /https?:\/\/github\.com\/(?:\w[\w-.]+\/\w[\w-.]+|\B)\/(?:issues|pull)\/[1-9]\d*\b/;
 	private keywordRegex: RegExp;
 
 	constructor(private repo: Repository, keywords: string[]) {
@@ -62,7 +62,7 @@ export class DependencyExtractor {
 			// 'owner/repo#number' format
 			return ref
 				.replace(/https?:\/\/github\.com\//i, '')
-				.replace(/\/(issues|pulls)\//i, '#');
+				.replace(/\/(issues|pull)\//i, '#');
 		});
 	}
 

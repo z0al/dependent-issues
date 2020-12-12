@@ -32,7 +32,7 @@ test('DependencyExtractor', () => {
 	- Full issue URL:
 		- Depends on https://github.com/another/repo/issues/141
 		- Depends on http://github.com/another/repo/issues/404
-		- Depends on https://github.com/another/repo/pulls/142
+		- Depends on https://github.com/another/repo/pull/142
 	- Crazy formatting:
 		- Depends on ano-ther.999/re_po#123
 	- In brackets:
@@ -49,6 +49,7 @@ test('DependencyExtractor', () => {
 	- Depends on user_repo#123
 	- Depends on this/is/not/repo#123
 	- Depends on #123hashtag
+	- Depends on https://github.com/another/repo/pulls/142
 	`;
 
 	const issue = { body } as Issue;
@@ -82,7 +83,7 @@ test('DependencyExtractor', () => {
 			repo: 'repo',
 			number: 404,
 		},
-		// Depends on https://github.com/another/repo/pulls/142
+		// Depends on https://github.com/another/repo/pull/142
 		{
 			owner: 'another',
 			repo: 'repo',

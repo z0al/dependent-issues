@@ -276,7 +276,7 @@ class DependencyExtractor {
     constructor(repo, keywords) {
         this.repo = repo;
         this.issueRegex = issue_regex_1.default();
-        this.urlRegex = /https?:\/\/github\.com\/(?:\w[\w-.]+\/\w[\w-.]+|\B)\/(?:issues|pulls)\/[1-9]\d*\b/;
+        this.urlRegex = /https?:\/\/github\.com\/(?:\w[\w-.]+\/\w[\w-.]+|\B)\/(?:issues|pull)\/[1-9]\d*\b/;
         this.keywordRegex = new RegExp(keywords.map((kw) => kw.trim().replace(/\s+/g, '\\s+')).join('|'), 'i');
         this.regex = this.buildRegex();
     }
@@ -297,7 +297,7 @@ class DependencyExtractor {
             // 'owner/repo#number' format
             return ref
                 .replace(/https?:\/\/github\.com\//i, '')
-                .replace(/\/(issues|pulls)\//i, '#');
+                .replace(/\/(issues|pull)\//i, '#');
         });
     }
     fromIssue(issue) {
