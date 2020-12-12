@@ -259,18 +259,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.IssueManager = exports.DependencyResolver = exports.DependencyExtractor = exports.formatDependency = exports.createDependencyRegex = void 0;
+exports.IssueManager = exports.DependencyResolver = exports.DependencyExtractor = exports.formatDependency = void 0;
 // Packages
 const dequal_1 = __webpack_require__(8713);
 const lodash_uniqby_1 = __importDefault(__webpack_require__(3586));
 const issue_regex_1 = __importDefault(__webpack_require__(2506));
-const ISSUE_REGEX = issue_regex_1.default();
-function createDependencyRegex(keywords) {
-    const flags = ISSUE_REGEX.flags + 'i';
-    // outputs: kw1|kw2 <white-space> (<issue-regex>)
-    return new RegExp(`(?:${keywords.join('|')})\\s+(${ISSUE_REGEX.source})`, flags);
-}
-exports.createDependencyRegex = createDependencyRegex;
 function formatDependency(dep, repo) {
     const depRepo = { owner: dep.owner, repo: dep.repo };
     if (dequal_1.dequal(depRepo, repo)) {
@@ -282,18 +275,34 @@ exports.formatDependency = formatDependency;
 class DependencyExtractor {
     constructor(repo, keywords) {
         this.repo = repo;
-        this.pattern = createDependencyRegex(keywords);
+        this.issueRegex = issue_regex_1.default();
+        this.urlRegex = /https?:\/\/github\.com\/(?:\w[\w-.]+\/\w[\w-.]+|\B)\/(?:issues|pulls)\/[1-9]\d*\b/;
+        this.keywordRegex = new RegExp(keywords.map((kw) => kw.trim().replace(/\s+/g, '\\s+')).join('|'), 'i');
+        this.regex = this.buildRegex();
+    }
+    buildRegex() {
+        const flags = this.issueRegex.flags + 'i';
+        const ref = `${this.issueRegex.source}|${this.urlRegex.source}`;
+        return new RegExp(`(?:${this.keywordRegex.source})\\s+(${ref})`, flags);
     }
     deduplicate(deps) {
         return lodash_uniqby_1.default(deps, formatDependency);
     }
-    getIssueLinks(text) {
-        const issuesWithKeywords = text.match(this.pattern) || [];
-        return issuesWithKeywords.map((issue) => { var _a; return (_a = issue.match(ISSUE_REGEX)) === null || _a === void 0 ? void 0 : _a[0]; });
+    match(text) {
+        const references = text.match(this.regex) || [];
+        return references.map((ref) => {
+            // Get rid of keywords now
+            ref = ref.replace(this.keywordRegex, '').trim();
+            // Remove full URL if found. Should return either '#number' or
+            // 'owner/repo#number' format
+            return ref
+                .replace(/https?:\/\/github\.com\//i, '')
+                .replace(/\/(issues|pulls)\//i, '#');
+        });
     }
     fromIssue(issue) {
         const dependencies = [];
-        for (const issueLink of this.getIssueLinks(issue.body || '')) {
+        for (const issueLink of this.match(issue.body || '')) {
             // Can be '#number' or 'owner/repo#number'
             // 1) #number
             if (issueLink.startsWith('#')) {
@@ -3591,6 +3600,11 @@ const Endpoints = {
     }],
     users: ["GET /search/users"]
   },
+  secretScanning: {
+    getAlert: ["GET /repos/{owner}/{repo}/secret-scanning/alerts/{alert_number}"],
+    listAlertsForRepo: ["GET /repos/{owner}/{repo}/secret-scanning/alerts"],
+    updateAlert: ["PATCH /repos/{owner}/{repo}/secret-scanning/alerts/{alert_number}"]
+  },
   teams: {
     addOrUpdateMembershipForUserInOrg: ["PUT /orgs/{org}/teams/{team_slug}/memberships/{username}"],
     addOrUpdateProjectPermissionsInOrg: ["PUT /orgs/{org}/teams/{team_slug}/projects/{project_id}", {
@@ -3671,7 +3685,7 @@ const Endpoints = {
   }
 };
 
-const VERSION = "4.3.1";
+const VERSION = "4.4.1";
 
 function endpointsToMethods(octokit, endpointsMap) {
   const newMethods = {};

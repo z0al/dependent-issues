@@ -1,24 +1,11 @@
-// Packages
-import issueRegex from 'issue-regex';
-
 // Ours
 import { ActionContext, GithubClient, Issue } from '../types';
 import {
-	createDependencyRegex,
 	DependencyExtractor,
 	DependencyResolver,
 	IssueManager,
 	formatDependency,
 } from '../helpers';
-
-test('createDependencyRegex', () => {
-	const regex = createDependencyRegex(['depends on', 'blocked by']);
-
-	expect(regex.flags).toEqual('gi');
-	expect(regex.source).toEqual(
-		`(?:depends on|blocked by)\\s+(${issueRegex().source})`
-	);
-});
 
 test('formatDependency', () => {
 	const repo = { owner: 'owner', repo: 'repo' };
@@ -28,82 +15,109 @@ test('formatDependency', () => {
 	expect(formatDependency(dep, repo)).toEqual('#141');
 });
 
-describe('DependencyExtractor', () => {
+test('DependencyExtractor', () => {
 	const repo = {
 		owner: 'github',
 		repo: 'atom',
 	};
 
-	const tests = [
+	const body = `
+	Should match:
+
+	- Plain issue:
+		- Depends on #666
+		- Blocked by #123
+	- From another repository:
+		- Depends on another/repo#123
+	- Full issue URL:
+		- Depends on https://github.com/another/repo/issues/141
+		- Depends on http://github.com/another/repo/issues/404
+		- Depends on https://github.com/another/repo/pulls/142
+	- Crazy formatting:
+		- Depends on ano-ther.999/re_po#123
+	- In brackets:
+		- (Depends on #486)
+		- [Depends on #3167]
+		- <Depends on another/repo#18767>
+
+	Should NOT match:
+
+	- Depends on #0
+	- Depends on another/repo#0
+	- Depends on nonrepo#123
+	- Depends on non/-repo#123
+	- Depends on user_repo#123
+	- Depends on this/is/not/repo#123
+	- Depends on #123hashtag
+	`;
+
+	const issue = { body } as Issue;
+
+	const expectedDeps = [
+		// Depends on #666
 		{
-			title: 'empty string',
-			text: '',
-			expected: [],
+			...repo,
+			number: 666,
 		},
+		// Blocked by #123
 		{
-			title: 'wrong keyword',
-			text: 'depends on #2',
-			expected: [],
+			...repo,
+			number: 123,
 		},
+		// Depends on another/repo#123
 		{
-			title: 'self-referencing',
-			text: 'blocked by #1',
-			expected: [],
+			owner: 'another',
+			repo: 'repo',
+			number: 123,
 		},
+		// Depends on https://github.com/another/repo/issues/141
 		{
-			title: 'multiple dependencies',
-			text: 'blocked by #2, blocked by #1 and blocked by #3',
-			expected: [
-				{
-					...repo,
-					number: 2,
-				},
-				{
-					...repo,
-					number: 3,
-				},
-			],
+			owner: 'another',
+			repo: 'repo',
+			number: 141,
 		},
+		// Depends on http://github.com/another/repo/issues/404
 		{
-			title: 'duplicated issues',
-			text: 'blocked by #2, blocked by #1 and blocked by #2',
-			expected: [
-				{
-					...repo,
-					number: 2,
-				},
-			],
+			owner: 'another',
+			repo: 'repo',
+			number: 404,
 		},
+		// Depends on https://github.com/another/repo/pulls/142
 		{
-			title: 'with full links',
-			text:
-				'blocked by github/atom#2, blocked by Microsoft/vscode#1 and blocked by #3',
-			expected: [
-				{
-					...repo,
-					number: 2,
-				},
-				{
-					owner: 'Microsoft',
-					repo: 'vscode',
-					number: 1,
-				},
-				{
-					...repo,
-					number: 3,
-				},
-			],
+			owner: 'another',
+			repo: 'repo',
+			number: 142,
+		},
+		// Depends on ano-ther.999/re_po#123
+		{
+			owner: 'ano-ther.999',
+			repo: 're_po',
+			number: 123,
+		},
+		// (Depends on #486)
+		{
+			...repo,
+			number: 486,
+		},
+		// [Depends on #3167]
+		{
+			...repo,
+			number: 3167,
+		},
+		// <Depends on another/repo#18767>
+		{
+			owner: 'another',
+			repo: 'repo',
+			number: 18767,
 		},
 	];
 
-	const extractor = new DependencyExtractor(repo, ['blocked by']);
+	const extractor = new DependencyExtractor(repo, [
+		'  depends On',
+		'blocked   by',
+	]);
 
-	tests.forEach((t) => {
-		it(t.title, () => {
-			const issue = { body: t.text, number: 1 } as Issue;
-			expect(extractor.fromIssue(issue)).toEqual(t.expected);
-		});
-	});
+	expect(extractor.fromIssue(issue)).toEqual(expectedDeps);
 });
 
 describe('DependencyResolver', () => {

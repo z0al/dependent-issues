@@ -1,7 +1,7 @@
 // Packages
 import { dequal } from 'dequal';
 import uniqBy from 'lodash.uniqby';
-import issueRegex from 'issue-regex';
+import IssueRegex from 'issue-regex';
 
 // Ours
 import {
@@ -11,18 +11,6 @@ import {
 	GithubClient,
 	ActionContext,
 } from './types';
-
-const ISSUE_REGEX = issueRegex();
-
-export function createDependencyRegex(keywords: string[]) {
-	const flags = ISSUE_REGEX.flags + 'i';
-
-	// outputs: kw1|kw2 <white-space> (<issue-regex>)
-	return new RegExp(
-		`(?:${keywords.join('|')})\\s+(${ISSUE_REGEX.source})`,
-		flags
-	);
-}
 
 export function formatDependency(dep: Dependency, repo?: Repository) {
 	const depRepo = { owner: dep.owner, repo: dep.repo };
@@ -35,28 +23,53 @@ export function formatDependency(dep: Dependency, repo?: Repository) {
 }
 
 export class DependencyExtractor {
-	private pattern: RegExp;
+	private regex: RegExp;
+	private issueRegex = IssueRegex();
+	private urlRegex = /https?:\/\/github\.com\/(?:\w[\w-.]+\/\w[\w-.]+|\B)\/(?:issues|pulls)\/[1-9]\d*\b/;
+	private keywordRegex: RegExp;
 
 	constructor(private repo: Repository, keywords: string[]) {
-		this.pattern = createDependencyRegex(keywords);
+		this.keywordRegex = new RegExp(
+			keywords.map((kw) => kw.trim().replace(/\s+/g, '\\s+')).join('|'),
+			'i'
+		);
+
+		this.regex = this.buildRegex();
+	}
+
+	private buildRegex() {
+		const flags = this.issueRegex.flags + 'i';
+		const ref = `${this.issueRegex.source}|${this.urlRegex.source}`;
+
+		return new RegExp(
+			`(?:${this.keywordRegex.source})\\s+(${ref})`,
+			flags
+		);
 	}
 
 	private deduplicate(deps: Dependency[]) {
 		return uniqBy(deps, formatDependency);
 	}
 
-	private getIssueLinks(text: string) {
-		const issuesWithKeywords = text.match(this.pattern) || [];
+	private match(text: string) {
+		const references = text.match(this.regex) || [];
 
-		return issuesWithKeywords.map(
-			(issue) => issue.match(ISSUE_REGEX)?.[0] as string
-		);
+		return references.map((ref) => {
+			// Get rid of keywords now
+			ref = ref.replace(this.keywordRegex, '').trim();
+
+			// Remove full URL if found. Should return either '#number' or
+			// 'owner/repo#number' format
+			return ref
+				.replace(/https?:\/\/github\.com\//i, '')
+				.replace(/\/(issues|pulls)\//i, '#');
+		});
 	}
 
 	public fromIssue(issue: Issue) {
 		const dependencies: Dependency[] = [];
 
-		for (const issueLink of this.getIssueLinks(issue.body || '')) {
+		for (const issueLink of this.match(issue.body || '')) {
 			// Can be '#number' or 'owner/repo#number'
 			// 1) #number
 			if (issueLink.startsWith('#')) {
