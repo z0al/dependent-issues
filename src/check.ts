@@ -3,6 +3,7 @@ import * as core from '@actions/core';
 
 // Ours
 import { ActionContext } from './types';
+import { isSupported } from './support';
 
 import {
 	IssueManager,
@@ -20,6 +21,13 @@ export async function checkIssues(context: ActionContext) {
 
 	for (const issue of context.issues) {
 		core.startGroup(`Checking #${issue.number}`);
+
+		if (!isSupported(issue)) {
+			core.info('Unsupported issue or pull request. Skipped');
+			core.endGroup();
+			continue;
+		}
+
 		let dependencies = extractor.fromIssue(issue);
 
 		if (dependencies.length === 0) {

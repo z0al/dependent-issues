@@ -1,3 +1,5 @@
+> **Note:** Dependabot issues and pull requests are no longer supported. See the [changes](#changes) section below for details.
+
 # Dependent Issues
 
 > A GitHub Action for marking issues as dependent on another
@@ -61,6 +63,10 @@ Here how it can look like in practice:
 
 - **GITHUB_TOKEN** (Required): The token to use to make API calls to GitHub.
 
+## Changes
+
+- **March 20, 2021:** To avoid unnecessary failure due to [insufficient permissions][dependabot-change] in Dependabot PRs, all Dependabot issues and pull requests are now ignored. This behavior is not configurable.
+
 ## Credits
 
 Special thanks to [Jason Etcovitch](https://github.com/JasonEtco) for the original bot idea.
@@ -68,3 +74,5 @@ Special thanks to [Jason Etcovitch](https://github.com/JasonEtco) for the origin
 ## License
 
 MIT © [Ahmed T. Ali](https://github.com/z0al)
+
+[dependabot-change]: https://github.blog/changelog/2021-02-19-github-actions-workflows-triggered-by-dependabot-prs-will-run-with-read-only-permissions/

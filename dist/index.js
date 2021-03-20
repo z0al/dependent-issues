@@ -95,6 +95,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.checkIssues = void 0;
 // Packages
 const core = __importStar(__webpack_require__(2186));
+const support_1 = __webpack_require__(8238);
 const helpers_1 = __webpack_require__(5008);
 function checkIssues(context) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -104,6 +105,11 @@ function checkIssues(context) {
         const resolver = new helpers_1.DependencyResolver(client, context.issues, repo);
         for (const issue of context.issues) {
             core.startGroup(`Checking #${issue.number}`);
+            if (!support_1.isSupported(issue)) {
+                core.info('Unsupported issue or pull request. Skipped');
+                core.endGroup();
+                continue;
+            }
             let dependencies = extractor.fromIssue(issue);
             if (dependencies.length === 0) {
                 core.info('No dependencies found. Running clean-up');
@@ -495,6 +501,31 @@ class IssueManager {
 }
 exports.IssueManager = IssueManager;
 //# sourceMappingURL=helpers.js.map
+
+/***/ }),
+
+/***/ 8238:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isSupported = void 0;
+/**
+ * Workflows triggered by Dependabot PRs will run with read-only
+ * permissions. We need to ignore them.
+ *
+ * https://bit.ly/2NDzjUM
+ */
+function isDependabotPR(issue) {
+    var _a;
+    return ((_a = issue.user) === null || _a === void 0 ? void 0 : _a.login) === 'dependabot[bot]';
+}
+function isSupported(issue) {
+    return !isDependabotPR(issue);
+}
+exports.isSupported = isSupported;
+//# sourceMappingURL=support.js.map
 
 /***/ }),
 
