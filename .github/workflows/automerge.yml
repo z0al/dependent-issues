@@ -1,0 +1,13 @@
+name: Auto-Merge
+
+on: pull_request_target
+
+jobs:
+  automerge:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: fastify/github-action-merge-dependabot@v1
+        if: ${{ github.actor == 'dependabot[bot]' && github.event_name == 'pull_request' }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
