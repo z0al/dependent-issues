@@ -49,7 +49,7 @@ function start() {
             yield check_1.checkIssues(yield context_1.getActionContext());
         }
         catch (error) {
-            core.setFailed(error.message);
+            core.setFailed(error.stack || error.message);
         }
     });
 }

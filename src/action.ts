@@ -10,6 +10,6 @@ export async function start() {
 	try {
 		await checkIssues(await getActionContext());
 	} catch (error) {
-		core.setFailed(error.message);
+		core.setFailed(error.stack || error.message);
 	}
 }
