@@ -24,8 +24,15 @@ on:
       - opened
       - edited
       - reopened
+      # Makes sure we always add status check for PRs. Useful only if
+      # this action is required to pass before merging. Can be removed
+      # otherwise.
+      - synchronize
+
+  # Schedule a daily check. Useful if you reference cross-repository
+  # issues or pull requests. Can be removed otherwise.
   schedule:
-    - cron: '0 0 * * *' # schedule daily check
+    - cron: '0 0 * * *'
 
 jobs:
   check:
@@ -39,8 +46,8 @@ jobs:
           # (Optional) The label to use to mark dependent issues
           label: dependent
 
-          # (Optional) Enable checking for dependencies in issues. Enable by
-          # setting the value to "on". Default "off"
+          # (Optional) Enable checking for dependencies in issues.
+          # Enable by setting the value to "on". Default "off"
           check_issues: off
 
           # (Optional) A comma-separated list of keywords. Default
