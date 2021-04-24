@@ -6,5 +6,4 @@ updates:
     directory: '/'
     # Check the npm registry for updates weekly
     schedule:
-      interval: 'weekly'
-      day: 'saturday'
+      interval: 'daily'
