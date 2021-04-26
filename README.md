@@ -67,6 +67,10 @@ Here how it can look like in practice:
 
 - **GITHUB_TOKEN** (Required): The token to use to make API calls to GitHub.
 
+## FAQ
+
+Trouble setting up Dependent Issues? Check the [FAQ](./FAQ.md).
+
 ## Changelog
 
 - **March 20, 2021:** To avoid unnecessary failure due to [insufficient permissions][dependabot-change] on Dependabot PRs, all Dependabot issues and pull requests are now ignored. This behavior is not configurable.
