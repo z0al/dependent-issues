@@ -28,7 +28,7 @@
 		"@octokit/rest": "18.1.1"
 	},
 	"devDependencies": {
-		"@types/jest": "^26.0.22",
+		"@types/jest": "^26.0.23",
 		"@types/js-yaml": "^4.0.1",
 		"@types/lodash.uniqby": "^4.7.6",
 		"@types/node": "^15.0.0",
