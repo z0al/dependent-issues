@@ -1,10 +1,10 @@
-# Dependent-Issues FAQ
+# Frequently Asked Questions (FAQs)
 
-## Use cross-repository dependencies within an organization
+## Using cross-repository dependencies within an organization
 
 1. Setup the action
    
-    Setup the dependent-issues action in the repository, where youd like to create   issues and pull requests, that needs to use issues or pull-requests from a other repository within your organization.
+    Setup the action in the repository, where you'd like to create issues and pull requests, that need to use issues or pull requests from another repository within your organization.
    
     Remember to setup
     ```yml

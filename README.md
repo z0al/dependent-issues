@@ -69,7 +69,7 @@ Here how it can look like in practice:
 
 ## FAQ
 
-Trouble setting up Dependent Issues? Check the [FAQ](./FAQ.md).
+Trouble setting up the action? Check the [FAQ](./FAQ.md).
 
 ## Changelog
 
