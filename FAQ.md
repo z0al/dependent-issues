@@ -4,7 +4,7 @@
 
 1. Setup the action
    
-    Setup the action in the repository, where you'd like to create issues and pull requests, that need to use issues or pull requests from another repository within your organization.
+    Set up the action in the repository, where you'd like to create issues and pull requests, that need to use issues or pull requests from another repository within your organization.
    
     Remember to setup
     ```yml
@@ -12,18 +12,18 @@
       schedule:
         - cron: '0 0 * * *'
      ```
-    to regulary check the status of referenced issues in other repositories. Adjust the cron-schedule to your personal needs.
+    to regularly check the status of referenced issues in other repositories. Adjust the cron-schedule to your personal needs.
 
 2. Create a new PAT
    
-    The default setup of dependent-issues uses the pre-configured `GITHUB_TOKEN`, but that only enables access to the repository, in which the action is setup.
+    The default setup uses the pre-configured `GITHUB_TOKEN`, but that only enables access to the repository, in which the action is set up.
     Because of that, you need to create a new PAT (Personal Access Token). Consider using the organization account, to create the PAT.
 
     Follow the official documentation to create a new PAT:
 
     [https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token](https://docs.github.com/en/github/authenticating-to-github/creating-a-personal-access-token)
 
-    When setting up the new PAT, you need to to grant `repo` permissions. Explanations for each permission can be found in the official documentation:
+    When setting up the new PAT, you need to grant `repo` permissions. Explanations for each permission can be found in the official documentation:
 
     [https://docs.github.com/en/developers/apps/scopes-for-oauth-apps](https://docs.github.com/en/developers/apps/scopes-for-oauth-apps)
 
@@ -43,9 +43,9 @@
             GITHUB_TOKEN: ${{ secrets.YOUR_NEW_TOKEN }}
     ```
 
-    > Always use the GitHub secret-management to store your PATs! Never put secrets directly in your repository-sourcecode!
+    > Always use the GitHub secret-management to store your PATs! Never put secrets directly in your repository-source code!
 
-5. Reference issues and pull-requests from other organization repositories
+5. Reference issues and pull requests from other organization repositories
 
     Reference the issue or pull-request with the URL like the following example:
 
