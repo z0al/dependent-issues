@@ -40,6 +40,8 @@ jobs:
         env:
           # (Required) The token to use to make API calls to GitHub.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+					# (Optional) The token to use to make API calls to GitHub for remote repos.
+					READ_ONLY_GITHUB_TOKEN: ${{ secrets.READ_ONLY_GITHUB_TOKEN }}
         with:
           # (Optional) The label to use to mark dependent issues
           label: dependent
