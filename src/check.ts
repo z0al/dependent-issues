@@ -17,7 +17,7 @@ export async function checkIssues(context: ActionContext) {
 
 	const manager = new IssueManager(client, repo, config);
 	const extractor = new DependencyExtractor(repo, config.keywords);
-	const resolver = new DependencyResolver(client, readOnlyClient, context.issues, repo);
+	const resolver = new DependencyResolver(readOnlyClient, context.issues, repo);
 
 	for (const issue of context.issues) {
 		core.startGroup(`Checking #${issue.number}`);

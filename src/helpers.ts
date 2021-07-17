@@ -106,7 +106,6 @@ export class DependencyResolver {
 
 	constructor(
 		private gh: GithubClient,
-		private readOnlyGh: GithubClient,
 		issues: Issue[],
 		repo: Repository
 	) {
@@ -138,7 +137,7 @@ export class DependencyResolver {
 
 		// Fetch from GitHub
 		const remoteIssue = (
-			await this.readOnlyGh.issues.get({
+			await this.gh.issues.get({
 				owner: dep.owner,
 				repo: dep.repo,
 				issue_number: dep.number,
