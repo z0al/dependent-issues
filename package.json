@@ -28,10 +28,10 @@
 		"@octokit/rest": "18.1.1"
 	},
 	"devDependencies": {
-		"@types/jest": "^26.0.23",
+		"@types/jest": "^26.0.24",
 		"@types/js-yaml": "^4.0.1",
 		"@types/lodash.uniqby": "^4.7.6",
-		"@types/node": "^15.12.1",
+		"@types/node": "^16.3.2",
 		"@typescript-eslint/parser": "^4.26.0",
 		"@vercel/ncc": "^0.28.6",
 		"eslint": "^7.28.0",
