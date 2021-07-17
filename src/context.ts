@@ -35,7 +35,7 @@ export async function getActionContext(): Promise<ActionContext> {
 	) as unknown) as GithubClient;
 
 	const readOnlyClient = (github.getOctokit(
-		process.env.READ_ONLY_GITHUB_TOKEN || process.env.GITHUB_TOKEN
+		process.env.GITHUB_READ_TOKEN || process.env.GITHUB_TOKEN
 	) as unknown) as GithubClient;
 
 	const { issue, repo } = github.context;

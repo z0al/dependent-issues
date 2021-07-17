@@ -101,7 +101,7 @@ function checkIssues(context) {
         const { client, readOnlyClient, config, repo } = context;
         const manager = new helpers_1.IssueManager(client, repo, config);
         const extractor = new helpers_1.DependencyExtractor(repo, config.keywords);
-        const resolver = new helpers_1.DependencyResolver(client, readOnlyClient, context.issues, repo);
+        const resolver = new helpers_1.DependencyResolver(readOnlyClient, context.issues, repo);
         for (const issue of context.issues) {
             core.startGroup(`Checking #${issue.number}`);
             if (!support_1.isSupported(issue)) {
@@ -211,7 +211,7 @@ function getActionContext() {
             throw new Error('env.GITHUB_TOKEN must not be empty');
         }
         const client = github.getOctokit(process.env.GITHUB_TOKEN);
-        const readOnlyClient = github.getOctokit(process.env.READ_ONLY_GITHUB_TOKEN || process.env.GITHUB_TOKEN);
+        const readOnlyClient = github.getOctokit(process.env.GITHUB_READ_TOKEN || process.env.GITHUB_TOKEN);
         const { issue, repo } = github.context;
         let issues = [];
         // Only run checks for the context.issue (if any)
@@ -334,9 +334,8 @@ class DependencyExtractor {
 }
 exports.DependencyExtractor = DependencyExtractor;
 class DependencyResolver {
-    constructor(gh, readOnlyGh, issues, repo) {
+    constructor(gh, issues, repo) {
         this.gh = gh;
-        this.readOnlyGh = readOnlyGh;
         this.cache = new Map();
         // Populate the cache with the known issues
         issues.forEach((issue) => {
@@ -355,7 +354,7 @@ class DependencyResolver {
                 return cachedIssue;
             }
             // Fetch from GitHub
-            const remoteIssue = (yield this.readOnlyGh.issues.get({
+            const remoteIssue = (yield this.gh.issues.get({
                 owner: dep.owner,
                 repo: dep.repo,
                 issue_number: dep.number,
