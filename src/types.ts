@@ -17,6 +17,7 @@ export type Repository = Required<typeof github.context.repo>;
 
 export type ActionContext = {
 	client: GithubClient;
+	readOnlyClient: GithubClient;
 	issues: Issue[];
 	repo: Repository;
 	config: {
