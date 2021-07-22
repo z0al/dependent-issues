@@ -25,42 +25,44 @@ jest.mock('@actions/core', () => {
 
 jest.mock('@actions/github', () => {
 	gh = {
-		pulls: {
-			get: jest.fn().mockResolvedValue({
-				data: {
-					head: { sha: '<commit-sha>' },
-				},
-			}) as any,
-			list: jest.fn().mockResolvedValue([
-				{
-					number: 1,
-					body:
-						'This work depends on #2 and blocked by user/another-repo#3',
-					pull_request: {},
-					labels: [{ name: 'bug' }],
-				},
-				{
-					number: 2,
-					pull_request: {},
-					body: 'This work does not depend on anything',
-					labels: [],
-					state: 'open',
-				},
-			]) as any,
-		},
-		issues: {
-			get: jest.fn().mockResolvedValue({
-				data: {
-					number: 3,
-					state: 'open',
-				},
-			}) as any,
-			addLabels: jest.fn() as any,
-			createComment: jest.fn() as any,
-			listComments: jest.fn().mockResolvedValue([]) as any,
-		},
-		repos: {
-			createCommitStatus: jest.fn() as any,
+		rest: {
+			pulls: {
+				get: jest.fn().mockResolvedValue({
+					data: {
+						head: { sha: '<commit-sha>' },
+					},
+				}) as any,
+				list: jest.fn().mockResolvedValue([
+					{
+						number: 1,
+						body:
+							'This work depends on #2 and blocked by user/another-repo#3',
+						pull_request: {},
+						labels: [{ name: 'bug' }],
+					},
+					{
+						number: 2,
+						pull_request: {},
+						body: 'This work does not depend on anything',
+						labels: [],
+						state: 'open',
+					},
+				]) as any,
+			},
+			issues: {
+				get: jest.fn().mockResolvedValue({
+					data: {
+						number: 3,
+						state: 'open',
+					},
+				}) as any,
+				addLabels: jest.fn() as any,
+				createComment: jest.fn() as any,
+				listComments: jest.fn().mockResolvedValue([]) as any,
+			},
+			repos: {
+				createCommitStatus: jest.fn() as any,
+			},
 		},
 		paginate: jest.fn().mockImplementation((fn, opt) => {
 			const { per_page: _, ...rest } = opt;
@@ -83,7 +85,7 @@ test('it works in default config', async () => {
 	// Trigger action
 	await action.start();
 
-	expect(gh.issues.createComment).toHaveBeenCalledWith({
+	expect(gh.rest.issues.createComment).toHaveBeenCalledWith({
 		issue_number: 1,
 		owner: 'owner',
 		repo: 'repo',
@@ -98,18 +100,18 @@ Brought to you by **[Dependent Issues](https://github.com/z0al/dependent-issues)
 <!-- By Dependent Issues (Action) - DO NOT REMOVE -->`,
 	});
 
-	expect(gh.issues.createComment).toHaveBeenCalledTimes(1);
+	expect(gh.rest.issues.createComment).toHaveBeenCalledTimes(1);
 
-	expect(gh.issues.addLabels).toHaveBeenCalledWith({
+	expect(gh.rest.issues.addLabels).toHaveBeenCalledWith({
 		owner: 'owner',
 		repo: 'repo',
 		issue_number: 1,
 		labels: ['dependent'],
 	});
 
-	expect(gh.issues.addLabels).toHaveBeenCalledTimes(1);
+	expect(gh.rest.issues.addLabels).toHaveBeenCalledTimes(1);
 
-	expect(gh.repos.createCommitStatus).toHaveBeenCalledWith({
+	expect(gh.rest.repos.createCommitStatus).toHaveBeenCalledWith({
 		owner: 'owner',
 		repo: 'repo',
 		description: 'Blocked by #2 and 1 more issues',
@@ -118,7 +120,7 @@ Brought to you by **[Dependent Issues](https://github.com/z0al/dependent-issues)
 		sha: '<commit-sha>',
 	});
 
-	expect(gh.repos.createCommitStatus).toHaveBeenCalledWith({
+	expect(gh.rest.repos.createCommitStatus).toHaveBeenCalledWith({
 		owner: 'owner',
 		repo: 'repo',
 		description: 'No dependencies',
@@ -127,5 +129,5 @@ Brought to you by **[Dependent Issues](https://github.com/z0al/dependent-issues)
 		sha: '<commit-sha>',
 	});
 
-	expect(gh.repos.createCommitStatus).toHaveBeenCalledTimes(2);
+	expect(gh.rest.repos.createCommitStatus).toHaveBeenCalledTimes(2);
 });

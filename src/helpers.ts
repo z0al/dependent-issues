@@ -10,6 +10,7 @@ import {
 	Repository,
 	GithubClient,
 	ActionContext,
+	Comment,
 } from './types';
 
 export function formatDependency(dep: Dependency, repo?: Repository) {
@@ -137,7 +138,7 @@ export class DependencyResolver {
 
 		// Fetch from GitHub
 		const remoteIssue = (
-			await this.gh.issues.get({
+			await this.gh.rest.issues.get({
 				owner: dep.owner,
 				repo: dep.repo,
 				issue_number: dep.number,
@@ -175,7 +176,7 @@ export class IssueManager {
 		const shouldAddLabel = !this.hasLabel(issue);
 
 		if (shouldAddLabel) {
-			await this.gh.issues.addLabels({
+			await this.gh.rest.issues.addLabels({
 				...this.repo,
 				issue_number: issue.number,
 				labels: [this.config.label],
@@ -187,7 +188,7 @@ export class IssueManager {
 		const shouldRemoveLabel = this.hasLabel(issue);
 
 		if (shouldRemoveLabel) {
-			await this.gh.issues.removeLabel({
+			await this.gh.rest.issues.removeLabel({
 				...this.repo,
 				issue_number: issue.number,
 				name: this.config.label,
@@ -266,8 +267,8 @@ export class IssueManager {
 	async writeComment(issue: Issue, text: string, create = false) {
 		const signedText = this.sign(text);
 
-		const issueComments = await this.gh.paginate(
-			this.gh.issues.listComments,
+		const issueComments: Comment[] = await this.gh.paginate(
+			this.gh.rest.issues.listComments as any,
 			{ ...this.repo, issue_number: issue.number, per_page: 100 }
 		);
 
@@ -287,7 +288,7 @@ export class IssueManager {
 
 		// Delete old comment if necessary
 		if (create && currentComment) {
-			await this.gh.issues.deleteComment({
+			await this.gh.rest.issues.deleteComment({
 				...this.repo,
 				comment_id: currentComment.id,
 			});
@@ -297,19 +298,19 @@ export class IssueManager {
 
 		// Write comment
 		currentComment && !create
-			? await this.gh.issues.updateComment({
+			? await this.gh.rest.issues.updateComment({
 					...commentParams,
 					comment_id: currentComment.id,
 			  })
-			: await this.gh.issues.createComment({
+			: await this.gh.rest.issues.createComment({
 					...commentParams,
 					issue_number: issue.number,
 			  });
 	}
 
 	async removeActionComments(issue: Issue) {
-		const issueComments = await this.gh.paginate(
-			this.gh.issues.listComments,
+		const issueComments: Comment[] = await this.gh.paginate(
+			this.gh.rest.issues.listComments as any,
 			{ ...this.repo, issue_number: issue.number, per_page: 100 }
 		);
 		const existingComments = issueComments.filter((comment) =>
@@ -317,8 +318,8 @@ export class IssueManager {
 		);
 
 		await Promise.all(
-			existingComments.map((comment) =>
-				this.gh.issues.deleteComment({
+			existingComments.map((comment: any) =>
+				this.gh.rest.issues.deleteComment({
 					...this.repo,
 					comment_id: comment.id,
 				})
@@ -349,13 +350,13 @@ export class IssueManager {
 
 		// Get the PR Head SHA
 		const pull = (
-			await this.gh.pulls.get({
+			await this.gh.rest.pulls.get({
 				...this.repo,
 				pull_number: issue.number,
 			})
 		).data;
 
-		return this.gh.repos.createCommitStatus({
+		return this.gh.rest.repos.createCommitStatus({
 			...this.repo,
 			description,
 			sha: pull.head.sha,

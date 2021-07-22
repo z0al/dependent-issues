@@ -7,7 +7,11 @@ type UnwrapPromise<T> = T extends PromiseLike<infer U> ? U : T;
 export type GithubClient = Octokit;
 
 export type Issue = UnwrapPromise<
-	ReturnType<GithubClient['issues']['get']>
+	ReturnType<GithubClient['rest']['issues']['get']>
+>['data'];
+
+export type Comment = UnwrapPromise<
+	ReturnType<GithubClient['rest']['issues']['getComment']>
 >['data'];
 
 export type Dependency = Required<typeof github.context.issue> & {

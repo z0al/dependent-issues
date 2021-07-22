@@ -46,7 +46,10 @@ export async function getActionContext(): Promise<ActionContext> {
 	if (issue?.number) {
 		core.info(`Payload issue: #${issue?.number}`);
 		const remoteIssue = (
-			await client.issues.get({ ...repo, issue_number: issue.number })
+			await client.rest.issues.get({
+				...repo,
+				issue_number: issue.number,
+			})
 		).data;
 
 		// Ignore closed PR/issues
@@ -64,10 +67,10 @@ export async function getActionContext(): Promise<ActionContext> {
 			per_page: 100,
 		};
 
-		const method =
+		const method: any =
 			config.check_issues === 'on'
-				? client.issues.listForRepo
-				: client.pulls.list;
+				? client.rest.issues.listForRepo
+				: client.rest.pulls.list;
 
 		issues = (await client.paginate(method, options)) as Issue[];
 		core.info(`No. of open issues: ${issues.length}`);

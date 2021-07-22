@@ -140,8 +140,10 @@ describe('DependencyResolver', () => {
 		issuesGet = jest.fn();
 
 		gh = {
-			issues: {
-				get: issuesGet as any,
+			rest: {
+				issues: {
+					get: issuesGet as any,
+				},
 			},
 		} as GithubClient;
 
@@ -220,19 +222,21 @@ describe('IssueManager', () => {
 				.mockImplementation((_, options) =>
 					listComments(options)
 				) as any,
-			issues: {
-				addLabels: jest.fn() as any,
-				removeLabel: jest.fn() as any,
-				listComments: listComments as any,
-				deleteComment: jest.fn() as any,
-				updateComment: jest.fn() as any,
-				createComment: jest.fn() as any,
-			},
-			pulls: {
-				get: jest.fn() as any,
-			},
-			repos: {
-				createCommitStatus: jest.fn() as any,
+			rest: {
+				issues: {
+					addLabels: jest.fn() as any,
+					removeLabel: jest.fn() as any,
+					listComments: listComments as any,
+					deleteComment: jest.fn() as any,
+					updateComment: jest.fn() as any,
+					createComment: jest.fn() as any,
+				},
+				pulls: {
+					get: jest.fn() as any,
+				},
+				repos: {
+					createCommitStatus: jest.fn() as any,
+				},
 			},
 		} as GithubClient;
 
@@ -247,7 +251,7 @@ describe('IssueManager', () => {
 		};
 
 		beforeEach(() => {
-			((gh.pulls.get as unknown) as jest.Mock<
+			((gh.rest.pulls.get as unknown) as jest.Mock<
 				any,
 				any
 			>).mockResolvedValue({ data: pr });
@@ -256,8 +260,8 @@ describe('IssueManager', () => {
 		it('ignores non-PRs', async () => {
 			const issue = {} as any;
 			await manager.updateCommitStatus(issue, []);
-			expect(gh.pulls.get).not.toHaveBeenCalled();
-			expect(gh.repos.createCommitStatus).not.toHaveBeenCalled();
+			expect(gh.rest.pulls.get).not.toHaveBeenCalled();
+			expect(gh.rest.repos.createCommitStatus).not.toHaveBeenCalled();
 		});
 
 		it('sets the correct status on success', async () => {
@@ -265,12 +269,12 @@ describe('IssueManager', () => {
 
 			await manager.updateCommitStatus(issue, []);
 
-			expect(gh.pulls.get).toHaveBeenCalledWith({
+			expect(gh.rest.pulls.get).toHaveBeenCalledWith({
 				...repo,
 				pull_number: issue.number,
 			});
 
-			expect(gh.repos.createCommitStatus).toHaveBeenCalledWith({
+			expect(gh.rest.repos.createCommitStatus).toHaveBeenCalledWith({
 				...repo,
 				description: 'No dependencies',
 				state: 'success',
@@ -288,12 +292,12 @@ describe('IssueManager', () => {
 				{ blocker: true } as any,
 			]);
 
-			expect(gh.pulls.get).toHaveBeenCalledWith({
+			expect(gh.rest.pulls.get).toHaveBeenCalledWith({
 				...repo,
 				pull_number: issue.number,
 			});
 
-			expect(gh.repos.createCommitStatus).toHaveBeenCalledWith({
+			expect(gh.rest.repos.createCommitStatus).toHaveBeenCalledWith({
 				...repo,
 				description: 'Blocked by owner/repo#999 and 2 more issues',
 				state: 'pending',
@@ -325,21 +329,21 @@ describe('IssueManager', () => {
 
 			expect(gh.paginate).toHaveBeenCalled();
 
-			expect(gh.issues.listComments).toHaveBeenCalledWith(
+			expect(gh.rest.issues.listComments).toHaveBeenCalledWith(
 				expect.objectContaining({
 					...repo,
 					issue_number: issue.number,
 				})
 			);
 
-			expect(gh.issues.updateComment).toHaveBeenCalledWith({
+			expect(gh.rest.issues.updateComment).toHaveBeenCalledWith({
 				...repo,
 				body: text.trim() + '\n' + config.commentSignature,
 				comment_id: 2,
 			});
 
-			expect(gh.issues.deleteComment).not.toHaveBeenCalled();
-			expect(gh.issues.createComment).not.toHaveBeenCalled();
+			expect(gh.rest.issues.deleteComment).not.toHaveBeenCalled();
+			expect(gh.rest.issues.createComment).not.toHaveBeenCalled();
 		});
 
 		it('creates a new comment if required', async () => {
@@ -349,24 +353,24 @@ describe('IssueManager', () => {
 
 			expect(gh.paginate).toHaveBeenCalled();
 
-			expect(gh.issues.listComments).toHaveBeenCalledWith({
+			expect(gh.rest.issues.listComments).toHaveBeenCalledWith({
 				...repo,
 				issue_number: issue.number,
 				per_page: 100,
 			});
 
-			expect(gh.issues.deleteComment).toHaveBeenCalledWith({
+			expect(gh.rest.issues.deleteComment).toHaveBeenCalledWith({
 				...repo,
 				comment_id: 2,
 			});
 
-			expect(gh.issues.createComment).toHaveBeenCalledWith({
+			expect(gh.rest.issues.createComment).toHaveBeenCalledWith({
 				...repo,
 				issue_number: issue.number,
 				body: text.trim() + '\n' + config.commentSignature,
 			});
 
-			expect(gh.issues.updateComment).not.toHaveBeenCalled();
+			expect(gh.rest.issues.updateComment).not.toHaveBeenCalled();
 		});
 
 		it('exits early if the text is the same', async () => {
@@ -376,16 +380,16 @@ describe('IssueManager', () => {
 			await manager.writeComment(issue, text, true);
 
 			expect(gh.paginate).toHaveBeenCalled();
-			expect(gh.issues.listComments).toHaveBeenCalledWith(
+			expect(gh.rest.issues.listComments).toHaveBeenCalledWith(
 				expect.objectContaining({
 					...repo,
 					issue_number: issue.number,
 				})
 			);
 
-			expect(gh.issues.updateComment).not.toHaveBeenCalled();
-			expect(gh.issues.deleteComment).not.toHaveBeenCalled();
-			expect(gh.issues.createComment).not.toHaveBeenCalled();
+			expect(gh.rest.issues.updateComment).not.toHaveBeenCalled();
+			expect(gh.rest.issues.deleteComment).not.toHaveBeenCalled();
+			expect(gh.rest.issues.createComment).not.toHaveBeenCalled();
 		});
 	});
 });
