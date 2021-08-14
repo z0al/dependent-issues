@@ -1,0 +1,13 @@
+name: Auto-merge
+on:
+  schedule:
+    - cron: '0 * * * *'
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: pabio/dependabot-pr-action@master
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          merge-minor: true
+          merge-patch: true
