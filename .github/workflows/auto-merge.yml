@@ -12,5 +12,5 @@ jobs:
         with:
           github-token: ${{ secrets.DEPENDABOT_TOKEN }}
           target: minor
-          approve: true
+          approve: false
           command: squash and merge
