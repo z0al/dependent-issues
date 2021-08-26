@@ -15,6 +15,7 @@ export async function getActionContext(): Promise<ActionContext> {
 			'<!-- By Dependent Issues (Action) - DO NOT REMOVE -->',
 		label: core.getInput('label'),
 		check_issues: core.getInput('check_issues'),
+		ignore_dependabot: core.getInput('ignore_dependabot'),
 		keywords: core
 			.getInput('keywords')
 			.trim()

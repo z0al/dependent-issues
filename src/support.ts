@@ -11,6 +11,6 @@ function isDependabotPR(issue: Issue) {
 	return issue.user?.login === 'dependabot[bot]';
 }
 
-export function isSupported(issue: Issue) {
-	return !isDependabotPR(issue);
+export function isSupported(config: any, issue: Issue) {
+	return !(config.ignore_dependabot === 'on' && isDependabotPR(issue));
 }
