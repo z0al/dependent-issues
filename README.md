@@ -78,10 +78,6 @@ Here how it can look like in practice:
 
 Trouble setting up the action? Check the [FAQ](./FAQ.md).
 
-## Changelog
-
-- **March 20, 2021:** To avoid unnecessary failure due to [insufficient permissions][dependabot-change] on Dependabot PRs, all Dependabot issues and pull requests are now ignored. This behavior is not configurable.
-
 ## Credits
 
 Special thanks to [Jason Etcovitch](https://github.com/JasonEtco) for the original bot idea.
