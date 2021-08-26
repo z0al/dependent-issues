@@ -26,7 +26,7 @@ export async function checkIssues(context: ActionContext) {
 	for (const issue of context.issues) {
 		core.startGroup(`Checking #${issue.number}`);
 
-		if (!isSupported(issue)) {
+		if (!isSupported(config, issue)) {
 			core.info('Unsupported issue or pull request. Skipped');
 			core.endGroup();
 			continue;

@@ -30,6 +30,7 @@ export type ActionContext = {
 		actionRepoURL: string;
 		label: string;
 		check_issues: string;
+		ignore_dependabot: string;
 		keywords: string[];
 	};
 };
