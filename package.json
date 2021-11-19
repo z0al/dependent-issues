@@ -28,7 +28,7 @@
 		"lodash.uniqby": "^4.7.0"
 	},
 	"devDependencies": {
-		"@types/jest": "^27.0.2",
+		"@types/jest": "^27.0.3",
 		"@types/js-yaml": "^4.0.4",
 		"@types/lodash.uniqby": "^4.7.6",
 		"@types/node": "^16.11.9",
