@@ -16,5 +16,4 @@ jobs:
         with:
           publish_latest_tag: false
           prefer_branch_releases: false
-        env:
-          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN  }}'
+          token: ${{ github.token }}
