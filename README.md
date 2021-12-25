@@ -61,11 +61,11 @@ jobs:
 
           # (Optional) A custom comment body. It supports `{{ dependencies }}` token.
           comment: >
-          	This PR/issue depends on:
+            This PR/issue depends on:
 
-          	{{ dependencies }}
+            {{ dependencies }}
 
-          	By **[Dependent Issues](https://github.com/z0al/dependent-issues)** (🤖). Happy coding!
+            By **[Dependent Issues](https://github.com/z0al/dependent-issues)** (🤖). Happy coding!
 ```
 
 Here how it can look like in practice:
