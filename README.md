@@ -42,6 +42,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # (Optional) The token to use to make API calls to GitHub for remote repos.
           GITHUB_READ_TOKEN: ${{ secrets.GITHUB_READ_TOKEN }}
+
         with:
           # (Optional) The label to use to mark dependent issues
           label: dependent
@@ -57,6 +58,14 @@ jobs:
           # (Optional) A comma-separated list of keywords. Default
           # "depends on, blocked by"
           keywords: depends on, blocked by
+
+          # (Optional) A custom comment body. It supports `{{ dependencies }}` token.
+          comment: >
+          	This PR/issue depends on:
+
+          	{{ dependencies }}
+
+          	By **[Dependent Issues](https://github.com/z0al/dependent-issues)** (🤖). Happy coding!
 ```
 
 Here how it can look like in practice:
@@ -69,6 +78,7 @@ Here how it can look like in practice:
 - **check_issues** (Optional): Enable checking for dependencies in issues. Enable by setting the value to `on`. Default `off`.
 - **ignore_dependabot** (Optional): Ignore dependabot PRs. Enable by setting the value to `on`. Default `off`. Use this if you run the action on `pull_request` rather than `pull_request_target`.
 - **keywords** (Optional): A comma-separated list of keywords. Default `depends on, blocked by`.
+- **comment** (Optional): A custom comment body. It supports `{{ dependencies }}` token.
 
 ## Environment variables
 

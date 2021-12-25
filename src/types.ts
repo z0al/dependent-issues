@@ -26,8 +26,8 @@ export type ActionContext = {
 	repo: Repository;
 	config: {
 		actionName: string;
+		commentBody: string;
 		commentSignature: string;
-		actionRepoURL: string;
 		label: string;
 		check_issues: string;
 		ignore_dependabot: string;

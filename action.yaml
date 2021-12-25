@@ -22,6 +22,16 @@ inputs:
     description: A comma-separated list of keywords
     default: depends on, blocked by
 
+  comment:
+    required: false
+    description: A custom comment body. It supports `{{ dependencies }}` token.
+    default: >
+      This PR/issue depends on:
+
+      {{ dependencies }}
+
+      By **[Dependent Issues](https://github.com/z0al/dependent-issues)** (🤖). Happy coding!
+
 runs:
   using: node12
   main: ./index.js

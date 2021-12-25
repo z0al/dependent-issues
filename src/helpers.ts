@@ -26,7 +26,8 @@ export function formatDependency(dep: Dependency, repo?: Repository) {
 export class DependencyExtractor {
 	private regex: RegExp;
 	private issueRegex = IssueRegex();
-	private urlRegex = /https?:\/\/github\.com\/(?:\w[\w-.]+\/\w[\w-.]+|\B)\/(?:issues|pull)\/[1-9]\d*\b/;
+	private urlRegex =
+		/https?:\/\/github\.com\/(?:\w[\w-.]+\/\w[\w-.]+|\B)\/(?:issues|pull)\/[1-9]\d*\b/;
 	private keywordRegex: RegExp;
 
 	constructor(private repo: Repository, keywords: string[]) {
@@ -228,40 +229,21 @@ export class IssueManager {
 		dependencies: Dependency[],
 		config: ActionContext['config']
 	) {
-		const isBlocked = dependencies.some((dep) => dep.blocker);
-
-		const header = isBlocked
-			? ':hourglass_flowing_sand: Alright! Looks like we ' +
-			  'need to wait for some *dependencies*:'
-			: ':tada: Great news! Looks like all the *dependencies* ' +
-			  'have been resolved:';
-
 		// e.g:
 		// * facebook/react#999
 		// * ~~facebook/react#1~~
-		const dependencyList = deps
+		const dependenciesList = deps
 			.map((dep) => {
 				const link = formatDependency(dep);
 				return '* ' + (dep.blocker ? link : `~~${link}~~`);
 			})
 			.join('\n');
 
-		const dontWorry = isBlocked
-			? `Don't worry, I will continue watching the list above and ` +
-			  'keep this comment updated. '
-			: '';
-
-		const howToUpdate =
-			'To add or remove a dependency please update this ' +
-			'issue/PR description.';
-
-		const footer =
-			`Brought to you by **[${config.actionName}]` +
-			`(${config.actionRepoURL})** (:robot: ). Happy coding!`;
-
-		const note = ':bulb: ' + dontWorry + howToUpdate;
-
-		return [header, dependencyList, note, footer].join('\n\n');
+		//
+		return config.commentBody.replace(
+			/\{\{\s*dependencies\s*\}\}/gi,
+			dependenciesList
+		);
 	}
 
 	async writeComment(issue: Issue, text: string, create = false) {

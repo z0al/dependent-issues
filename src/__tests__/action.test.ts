@@ -11,6 +11,7 @@ jest.mock('@actions/core', () => {
 		label: 'dependent',
 		issues: 'off',
 		keywords: 'depends on, blocked by',
+		comment: 'This PR/issue depends on:\n\n{{ dependencies }}',
 	} as any;
 
 	return {
@@ -35,8 +36,7 @@ jest.mock('@actions/github', () => {
 				list: jest.fn().mockResolvedValue([
 					{
 						number: 1,
-						body:
-							'This work depends on #2 and blocked by user/another-repo#3',
+						body: 'This work depends on #2 and blocked by user/another-repo#3',
 						pull_request: {},
 						labels: [{ name: 'bug' }],
 					},
@@ -89,14 +89,10 @@ test('it works in default config', async () => {
 		issue_number: 1,
 		owner: 'owner',
 		repo: 'repo',
-		body: `:hourglass_flowing_sand: Alright! Looks like we need to wait for some *dependencies*:
+		body: `This PR/issue depends on:
 
 * owner/repo#2
 * user/another-repo#3
-
-:bulb: Don't worry, I will continue watching the list above and keep this comment updated. To add or remove a dependency please update this issue/PR description.
-
-Brought to you by **[Dependent Issues](https://github.com/z0al/dependent-issues)** (:robot: ). Happy coding!
 <!-- By Dependent Issues (Action) - DO NOT REMOVE -->`,
 	});
 

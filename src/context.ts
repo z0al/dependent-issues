@@ -10,7 +10,7 @@ export async function getActionContext(): Promise<ActionContext> {
 
 	const config = {
 		actionName: 'Dependent Issues',
-		actionRepoURL: 'https://github.com/z0al/dependent-issues',
+		commentBody: core.getInput('comment'),
 		commentSignature:
 			'<!-- By Dependent Issues (Action) - DO NOT REMOVE -->',
 		label: core.getInput('label'),
@@ -31,13 +31,13 @@ export async function getActionContext(): Promise<ActionContext> {
 		throw new Error('env.GITHUB_TOKEN must not be empty');
 	}
 
-	const client = (github.getOctokit(
+	const client = github.getOctokit(
 		process.env.GITHUB_TOKEN
-	) as unknown) as GithubClient;
+	) as unknown as GithubClient;
 
-	const readOnlyClient = (github.getOctokit(
+	const readOnlyClient = github.getOctokit(
 		process.env.GITHUB_READ_TOKEN || process.env.GITHUB_TOKEN
-	) as unknown) as GithubClient;
+	) as unknown as GithubClient;
 
 	const { issue, repo } = github.context;
 
