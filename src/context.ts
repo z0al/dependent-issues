@@ -43,7 +43,9 @@ export async function getActionContext(): Promise<ActionContext> {
 
 	let issues: Issue[] = [];
 
-	// Only run checks for the context.issue (if any)
+	// If we are running in an issue context then only run checks
+	// for the issue in question. Unless, it's a close event because
+	// then the issue could be a dependency of another PR/issue.
 	if (issue?.number) {
 		core.info(`Payload issue: #${issue?.number}`);
 		const remoteIssue = (
@@ -60,8 +62,8 @@ export async function getActionContext(): Promise<ActionContext> {
 	}
 
 	// Otherwise, check all open issues
-	else {
-		core.info(`Payload issue: None`);
+	if (issues.length === 0) {
+		core.info(`Payload issue: None or closed`);
 		const options = {
 			...repo,
 			state: 'open' as 'open',

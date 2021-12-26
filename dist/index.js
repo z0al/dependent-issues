@@ -218,7 +218,9 @@ function getActionContext() {
         const readOnlyClient = github.getOctokit(process.env.GITHUB_READ_TOKEN || process.env.GITHUB_TOKEN);
         const { issue, repo } = github.context;
         let issues = [];
-        // Only run checks for the context.issue (if any)
+        // If we are running in an issue context then only run checks
+        // for the issue in question. Unless, it's a close event because
+        // then the issue could be a dependency of another PR/issue.
         if (issue === null || issue === void 0 ? void 0 : issue.number) {
             core.info(`Payload issue: #${issue === null || issue === void 0 ? void 0 : issue.number}`);
             const remoteIssue = (yield client.rest.issues.get(Object.assign(Object.assign({}, repo), { issue_number: issue.number }))).data;
@@ -228,8 +230,8 @@ function getActionContext() {
             }
         }
         // Otherwise, check all open issues
-        else {
-            core.info(`Payload issue: None`);
+        if (issues.length === 0) {
+            core.info(`Payload issue: None or closed`);
             const options = Object.assign(Object.assign({}, repo), { state: 'open', per_page: 100 });
             const method = config.check_issues === 'on'
                 ? client.rest.issues.listForRepo
