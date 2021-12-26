@@ -25,9 +25,8 @@ on:
       - closed
       - reopened
       # Makes sure we always add status check for PRs. Useful only if
-      # this action is required to pass before merging AND we reference
-      # PRs/issues outside the current repository. Otherwise, it can be
-      # removed.
+      # this action is required to pass before merging. Otherwise, it
+      # can be removed.
       - synchronize
 
   # Schedule a daily check. Useful if you reference cross-repository
