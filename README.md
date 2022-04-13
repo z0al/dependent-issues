@@ -53,10 +53,6 @@ jobs:
           # Enable by setting the value to "on". Default "off"
           check_issues: off
 
-          # (Optional) Ignore dependabot PRs.
-          # Enable by setting the value to "on". Default "off"
-          ignore_dependabot: off
-
           # (Optional) A comma-separated list of keywords. Default
           # "depends on, blocked by"
           keywords: depends on, blocked by
@@ -78,7 +74,6 @@ Here how it can look like in practice:
 
 - **label** (Optional): The label to use to mark dependent issues. Default `dependent`.
 - **check_issues** (Optional): Enable checking for dependencies in issues. Enable by setting the value to `on`. Default `off`.
-- **ignore_dependabot** (Optional): Ignore dependabot PRs. Enable by setting the value to `on`. Default `off`. Use this if you run the action on `pull_request` rather than `pull_request_target`.
 - **keywords** (Optional): A comma-separated list of keywords. Default `depends on, blocked by`.
 - **comment** (Optional): A custom comment body. It supports `{{ dependencies }}` token.
 
