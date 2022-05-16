@@ -20,7 +20,7 @@
 	"author": "",
 	"license": "MIT",
 	"dependencies": {
-		"@actions/core": "^1.8.1",
+		"@actions/core": "^1.8.2",
 		"@actions/github": "^5.0.3",
 		"@octokit/rest": "18.12.0",
 		"dequal": "^2.0.2",
