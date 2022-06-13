@@ -3793,10 +3793,10 @@ issue-parser@^6.0.0:
     lodash.isstring "^4.0.1"
     lodash.uniqby "^4.7.0"
 
-issue-regex@^3.1.0:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/issue-regex/-/issue-regex-3.1.0.tgz#0671f094d6449c5b712fac3c9562aecb727d709e"
-  integrity sha512-0RHjbtw9QXeSYnIEY5Yrp2QZrdtz21xBDV9C/GIlY2POmgoS6a7qjkYS5siRKXScnuAj5/SPv1C3YForNCHTJA==
+issue-regex@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/issue-regex/-/issue-regex-4.1.0.tgz#e2039123748a48e6711eed7a9eb392f2c17c9341"
+  integrity sha512-X3HBmm7+Th+l4/kMtqwcHHgELD0Lfl0Ina6S3+grr+mKmTxsrM84NAO1UuRPIxIbGLIl3TCEu45S1kdu21HYbQ==
 
 istanbul-lib-coverage@^3.0.0:
   version "3.0.0"
