@@ -17,6 +17,11 @@ inputs:
     description: Enable checking for dependencies in issues
     default: off
 
+  ignore_dependabot:
+    required: false
+    description: Ignore Dependabot PRs.
+    default: off
+
   keywords:
     required: false
     description: A comma-separated list of keywords
