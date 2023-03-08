@@ -283,7 +283,7 @@ describe('IssueManager', () => {
 			});
 		});
 
-		it('sets the correct status on pending', async () => {
+		it('sets the correct status on failure', async () => {
 			const issue = { number: 141, pull_request: {} } as any;
 
 			await manager.updateCommitStatus(issue, [
@@ -300,7 +300,7 @@ describe('IssueManager', () => {
 			expect(gh.rest.repos.createCommitStatus).toHaveBeenCalledWith({
 				...repo,
 				description: 'Blocked by owner/repo#999 and 2 more issues',
-				state: 'pending',
+				state: 'failure',
 				sha: pr.head.sha,
 				context: config.actionName,
 			});

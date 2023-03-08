@@ -111,7 +111,7 @@ test('it works in default config', async () => {
 		owner: 'owner',
 		repo: 'repo',
 		description: 'Blocked by #2 and 1 more issues',
-		state: 'pending',
+		state: 'failure',
 		context: 'Dependent Issues',
 		sha: '<commit-sha>',
 	});
