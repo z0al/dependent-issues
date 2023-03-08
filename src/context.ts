@@ -61,13 +61,15 @@ export async function getActionContext(): Promise<ActionContext> {
 		}
 	}
 
-	// Otherwise, check all open issues
+	// Otherwise, check all open issues that have the dependent label,
+	// where the label is defined by the user in config file.
 	if (issues.length === 0) {
 		core.info(`Payload issue: None or closed`);
 		const options = {
 			...repo,
 			state: 'open' as 'open',
 			per_page: 100,
+			labels: config.label,
 		};
 
 		const method: any =
