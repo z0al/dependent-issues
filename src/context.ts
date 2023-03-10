@@ -61,23 +61,27 @@ export async function getActionContext(): Promise<ActionContext> {
 		}
 	}
 
-	// Otherwise, check all open issues that have the dependent label,
-	// where the label is defined by the user in config file.
+	// Otherwise, check all open issues.
+	// If a label was provided in the config, check all open issues
+	// that have the label on them.
 	if (issues.length === 0) {
 		core.info(`Payload issue: None or closed`);
 		const options = {
 			...repo,
 			state: 'open' as 'open',
 			per_page: 100,
-			labels: config.label,
 		};
+
+		let queryParams = config.label
+			? { ...options, labels: config.label }
+			: options;
 
 		const method: any =
 			config.check_issues === 'on'
 				? client.rest.issues.listForRepo
 				: client.rest.pulls.list;
 
-		issues = (await client.paginate(method, options)) as Issue[];
+		issues = (await client.paginate(method, queryParams)) as Issue[];
 		core.info(`No. of open issues: ${issues.length}`);
 	}
 

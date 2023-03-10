@@ -241,15 +241,18 @@ function getActionContext() {
                 issues = [remoteIssue];
             }
         }
-        // Otherwise, check all open issues that have the dependent label,
-        // where the label is defined by the user in config file.
+        // Otherwise, check all open issues.
+        // If a label was provided in the config, check all open issues
+        // that have the label on them.
         if (issues.length === 0) {
             core.info(`Payload issue: None or closed`);
-            const options = Object.assign(Object.assign({}, repo), { state: 'open', per_page: 100, labels: config.label });
+            const options = Object.assign(Object.assign({}, repo), { state: 'open', per_page: 100 });
+            let queryParams = config.label
+                ? Object.assign(Object.assign({}, options), { labels: config.label }) : options;
             const method = config.check_issues === 'on'
                 ? client.rest.issues.listForRepo
                 : client.rest.pulls.list;
-            issues = (yield client.paginate(method, options));
+            issues = (yield client.paginate(method, queryParams));
             core.info(`No. of open issues: ${issues.length}`);
         }
         core.endGroup();
