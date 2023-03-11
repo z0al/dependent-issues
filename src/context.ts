@@ -1,6 +1,7 @@
 // Packages
 import * as core from '@actions/core';
 import * as github from '@actions/github';
+import { sanitizeStatusCheckInput } from './helpers';
 
 // Ours
 import { ActionContext, GithubClient, Issue } from './types';
@@ -21,6 +22,9 @@ export async function getActionContext(): Promise<ActionContext> {
 			.trim()
 			.split(',')
 			.map((kw) => kw.trim()),
+		status_check_type: sanitizeStatusCheckInput(
+			core.getInput('status_check_type')
+		),
 	};
 
 	if (config.keywords.length === 0) {

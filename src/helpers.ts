@@ -11,6 +11,8 @@ import {
 	GithubClient,
 	ActionContext,
 	Comment,
+	StatusCheck,
+	isValidStatusCheck,
 } from './types';
 
 export function formatDependency(dep: Dependency, repo?: Repository) {
@@ -21,6 +23,14 @@ export function formatDependency(dep: Dependency, repo?: Repository) {
 	}
 
 	return `${dep.owner}/${dep.repo}#${dep.number}`;
+}
+
+export function sanitizeStatusCheckInput(statusCheckInput: string) {
+	const statusCheck = isValidStatusCheck(statusCheckInput)
+		? statusCheckInput
+		: 'pending';
+
+	return statusCheck as StatusCheck;
 }
 
 export class DependencyExtractor {
@@ -343,7 +353,7 @@ export class IssueManager {
 			description,
 			sha: pull.head.sha,
 			context: this.config.actionName,
-			state: isBlocked ? 'pending' : 'success',
+			state: isBlocked ? this.config.status_check_type : 'success',
 		});
 	}
 }

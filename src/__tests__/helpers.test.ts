@@ -5,6 +5,7 @@ import {
 	DependencyResolver,
 	IssueManager,
 	formatDependency,
+	sanitizeStatusCheckInput,
 } from '../helpers';
 
 test('formatDependency', () => {
@@ -13,6 +14,18 @@ test('formatDependency', () => {
 
 	expect(formatDependency(dep)).toEqual('owner/repo#141');
 	expect(formatDependency(dep, repo)).toEqual('#141');
+});
+
+describe('sanitizeStatusCheckInput', () => {
+	it('should default to "pending" on invalid input', () => {
+		expect(sanitizeStatusCheckInput('')).toEqual('pending');
+		expect(sanitizeStatusCheckInput('error')).toEqual('pending');
+	});
+
+	it('should return proper status check on valid input', () => {
+		expect(sanitizeStatusCheckInput('pending')).toEqual('pending');
+		expect(sanitizeStatusCheckInput('failure')).toEqual('failure');
+	});
 });
 
 test('DependencyExtractor', () => {
@@ -209,6 +222,7 @@ describe('IssueManager', () => {
 		actionName: 'my-action',
 		label: 'my-label',
 		commentSignature: '<action-signature>',
+		status_check_type: 'pending',
 	} as ActionContext['config'];
 
 	let listComments: jest.Mock<any, any>;
@@ -251,10 +265,9 @@ describe('IssueManager', () => {
 		};
 
 		beforeEach(() => {
-			((gh.rest.pulls.get as unknown) as jest.Mock<
-				any,
-				any
-			>).mockResolvedValue({ data: pr });
+			(
+				gh.rest.pulls.get as unknown as jest.Mock<any, any>
+			).mockResolvedValue({ data: pr });
 		});
 
 		it('ignores non-PRs', async () => {
@@ -283,7 +296,14 @@ describe('IssueManager', () => {
 			});
 		});
 
-		it('sets the correct status on pending', async () => {
+		it('sets the correct status if blocked and status_check_type input is "pending"', async () => {
+			let configWithStatus = {
+				...config,
+				status_check_type: 'pending',
+			} as ActionContext['config'];
+
+			manager = new IssueManager(gh, repo, configWithStatus);
+
 			const issue = { number: 141, pull_request: {} } as any;
 
 			await manager.updateCommitStatus(issue, [
@@ -302,7 +322,37 @@ describe('IssueManager', () => {
 				description: 'Blocked by owner/repo#999 and 2 more issues',
 				state: 'pending',
 				sha: pr.head.sha,
-				context: config.actionName,
+				context: configWithStatus.actionName,
+			});
+		});
+
+		it('sets the correct status if blocked and status_check_type input is "failure"', async () => {
+			let configWithStatus = {
+				...config,
+				status_check_type: 'failure',
+			} as ActionContext['config'];
+
+			manager = new IssueManager(gh, repo, configWithStatus);
+
+			const issue = { number: 141, pull_request: {} } as any;
+
+			await manager.updateCommitStatus(issue, [
+				{ repo: 'repo', owner: 'owner', number: 999, blocker: true },
+				{ blocker: true } as any,
+				{ blocker: true } as any,
+			]);
+
+			expect(gh.rest.pulls.get).toHaveBeenCalledWith({
+				...repo,
+				pull_number: issue.number,
+			});
+
+			expect(gh.rest.repos.createCommitStatus).toHaveBeenCalledWith({
+				...repo,
+				description: 'Blocked by owner/repo#999 and 2 more issues',
+				state: 'failure',
+				sha: pr.head.sha,
+				context: configWithStatus.actionName,
 			});
 		});
 	});
