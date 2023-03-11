@@ -296,7 +296,14 @@ describe('IssueManager', () => {
 			});
 		});
 
-		it('sets the correct status on pending', async () => {
+		it('sets the correct status if blocked and status_check_type input is "pending"', async () => {
+			let configWithStatus = {
+				...config,
+				status_check_type: 'pending',
+			} as ActionContext['config'];
+
+			manager = new IssueManager(gh, repo, configWithStatus);
+
 			const issue = { number: 141, pull_request: {} } as any;
 
 			await manager.updateCommitStatus(issue, [
@@ -315,7 +322,37 @@ describe('IssueManager', () => {
 				description: 'Blocked by owner/repo#999 and 2 more issues',
 				state: 'pending',
 				sha: pr.head.sha,
-				context: config.actionName,
+				context: configWithStatus.actionName,
+			});
+		});
+
+		it('sets the correct status if blocked and status_check_type input is "failure"', async () => {
+			let configWithStatus = {
+				...config,
+				status_check_type: 'failure',
+			} as ActionContext['config'];
+
+			manager = new IssueManager(gh, repo, configWithStatus);
+
+			const issue = { number: 141, pull_request: {} } as any;
+
+			await manager.updateCommitStatus(issue, [
+				{ repo: 'repo', owner: 'owner', number: 999, blocker: true },
+				{ blocker: true } as any,
+				{ blocker: true } as any,
+			]);
+
+			expect(gh.rest.pulls.get).toHaveBeenCalledWith({
+				...repo,
+				pull_number: issue.number,
+			});
+
+			expect(gh.rest.repos.createCommitStatus).toHaveBeenCalledWith({
+				...repo,
+				description: 'Blocked by owner/repo#999 and 2 more issues',
+				state: 'failure',
+				sha: pr.head.sha,
+				context: configWithStatus.actionName,
 			});
 		});
 	});
