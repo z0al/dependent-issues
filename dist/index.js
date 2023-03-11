@@ -204,6 +204,7 @@ exports.getActionContext = void 0;
 // Packages
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
+const helpers_1 = __nccwpck_require__(5008);
 function getActionContext() {
     return __awaiter(this, void 0, void 0, function* () {
         core.startGroup('Context');
@@ -219,6 +220,7 @@ function getActionContext() {
                 .trim()
                 .split(',')
                 .map((kw) => kw.trim()),
+            status_check_type: (0, helpers_1.sanitizeStatusCheckInput)(core.getInput('status_check_type')),
         };
         if (config.keywords.length === 0) {
             throw new Error('invalid keywords');
@@ -284,11 +286,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.IssueManager = exports.DependencyResolver = exports.DependencyExtractor = exports.formatDependency = void 0;
+exports.IssueManager = exports.DependencyResolver = exports.DependencyExtractor = exports.sanitizeStatusCheckInput = exports.formatDependency = void 0;
 // Packages
 const dequal_1 = __nccwpck_require__(8713);
 const lodash_uniqby_1 = __importDefault(__nccwpck_require__(3586));
 const issue_regex_1 = __importDefault(__nccwpck_require__(2506));
+// Ours
+const types_1 = __nccwpck_require__(8164);
 function formatDependency(dep, repo) {
     const depRepo = { owner: dep.owner, repo: dep.repo };
     if ((0, dequal_1.dequal)(depRepo, repo)) {
@@ -297,6 +301,13 @@ function formatDependency(dep, repo) {
     return `${dep.owner}/${dep.repo}#${dep.number}`;
 }
 exports.formatDependency = formatDependency;
+function sanitizeStatusCheckInput(statusCheckInput) {
+    const statusCheck = (0, types_1.isValidStatusCheck)(statusCheckInput)
+        ? statusCheckInput
+        : 'pending';
+    return statusCheck;
+}
+exports.sanitizeStatusCheckInput = sanitizeStatusCheckInput;
 class DependencyExtractor {
     constructor(repo, keywords) {
         this.repo = repo;
@@ -500,7 +511,7 @@ class IssueManager {
                     : `Blocked by ${firstDependency} and ${blockers.length - 1} more issues`;
             // Get the PR Head SHA
             const pull = (yield this.gh.rest.pulls.get(Object.assign(Object.assign({}, this.repo), { pull_number: issue.number }))).data;
-            return this.gh.rest.repos.createCommitStatus(Object.assign(Object.assign({}, this.repo), { description, sha: pull.head.sha, context: this.config.actionName, state: isBlocked ? 'failure' : 'success' }));
+            return this.gh.rest.repos.createCommitStatus(Object.assign(Object.assign({}, this.repo), { description, sha: pull.head.sha, context: this.config.actionName, state: isBlocked ? this.config.status_check_type : 'success' }));
         });
     }
 }
@@ -531,6 +542,20 @@ function isSupported(config, issue) {
 }
 exports.isSupported = isSupported;
 //# sourceMappingURL=support.js.map
+
+/***/ }),
+
+/***/ 8164:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isValidStatusCheck = exports.statusChecks = void 0;
+exports.statusChecks = ['pending', 'failure'];
+const isValidStatusCheck = (statusCheckInput) => exports.statusChecks.includes(statusCheckInput);
+exports.isValidStatusCheck = isValidStatusCheck;
+//# sourceMappingURL=types.js.map
 
 /***/ }),
 

@@ -5,6 +5,7 @@ import {
 	DependencyResolver,
 	IssueManager,
 	formatDependency,
+	sanitizeStatusCheckInput,
 } from '../helpers';
 
 test('formatDependency', () => {
@@ -13,6 +14,18 @@ test('formatDependency', () => {
 
 	expect(formatDependency(dep)).toEqual('owner/repo#141');
 	expect(formatDependency(dep, repo)).toEqual('#141');
+});
+
+describe('sanitizeStatusCheckInput', () => {
+	it('should default to "pending" on invalid input', () => {
+		expect(sanitizeStatusCheckInput('')).toEqual('pending');
+		expect(sanitizeStatusCheckInput('error')).toEqual('pending');
+	});
+
+	it('should return proper status check on valid input', () => {
+		expect(sanitizeStatusCheckInput('pending')).toEqual('pending');
+		expect(sanitizeStatusCheckInput('failure')).toEqual('failure');
+	});
 });
 
 test('DependencyExtractor', () => {
@@ -209,6 +222,7 @@ describe('IssueManager', () => {
 		actionName: 'my-action',
 		label: 'my-label',
 		commentSignature: '<action-signature>',
+		status_check_type: 'pending',
 	} as ActionContext['config'];
 
 	let listComments: jest.Mock<any, any>;
@@ -251,10 +265,9 @@ describe('IssueManager', () => {
 		};
 
 		beforeEach(() => {
-			((gh.rest.pulls.get as unknown) as jest.Mock<
-				any,
-				any
-			>).mockResolvedValue({ data: pr });
+			(
+				gh.rest.pulls.get as unknown as jest.Mock<any, any>
+			).mockResolvedValue({ data: pr });
 		});
 
 		it('ignores non-PRs', async () => {
@@ -283,7 +296,7 @@ describe('IssueManager', () => {
 			});
 		});
 
-		it('sets the correct status on failure', async () => {
+		it('sets the correct status on pending', async () => {
 			const issue = { number: 141, pull_request: {} } as any;
 
 			await manager.updateCommitStatus(issue, [
@@ -300,7 +313,7 @@ describe('IssueManager', () => {
 			expect(gh.rest.repos.createCommitStatus).toHaveBeenCalledWith({
 				...repo,
 				description: 'Blocked by owner/repo#999 and 2 more issues',
-				state: 'failure',
+				state: 'pending',
 				sha: pr.head.sha,
 				context: config.actionName,
 			});

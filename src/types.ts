@@ -19,6 +19,11 @@ export type Dependency = Required<typeof github.context.issue> & {
 };
 export type Repository = Required<typeof github.context.repo>;
 
+export const statusChecks = ['pending', 'failure'];
+export type StatusCheck = 'pending' | 'failure';
+export const isValidStatusCheck = (statusCheckInput: string) =>
+	statusChecks.includes(statusCheckInput);
+
 export type ActionContext = {
 	client: GithubClient;
 	readOnlyClient: GithubClient;
@@ -32,5 +37,6 @@ export type ActionContext = {
 		check_issues: string;
 		ignore_dependabot: string;
 		keywords: string[];
+		status_check_type: StatusCheck;
 	};
 };

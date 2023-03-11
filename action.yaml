@@ -27,6 +27,13 @@ inputs:
     description: A comma-separated list of keywords
     default: depends on, blocked by
 
+  status_check_type:
+    required: false
+    description: >
+      The status check shown on a dependent PR whose merge is blocked,
+      either "pending" or "failure".
+    default: pending
+
   comment:
     required: false
     description: A custom comment body. It supports `{{ dependencies }}` token.
