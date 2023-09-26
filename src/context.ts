@@ -61,7 +61,9 @@ export async function getActionContext(): Promise<ActionContext> {
 		}
 	}
 
-	// Otherwise, check all open issues
+	// Otherwise, check all open issues.
+	// If a label was provided in the config, check all open issues
+	// that have the label on them.
 	if (issues.length === 0) {
 		core.info(`Payload issue: None or closed`);
 		const options = {
@@ -70,12 +72,16 @@ export async function getActionContext(): Promise<ActionContext> {
 			per_page: 100,
 		};
 
+		let queryParams = config.label
+			? { ...options, labels: config.label }
+			: options;
+
 		const method: any =
 			config.check_issues === 'on'
 				? client.rest.issues.listForRepo
 				: client.rest.pulls.list;
 
-		issues = (await client.paginate(method, options)) as Issue[];
+		issues = (await client.paginate(method, queryParams)) as Issue[];
 		core.info(`No. of open issues: ${issues.length}`);
 	}
 
